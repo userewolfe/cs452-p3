@@ -17,6 +17,13 @@ int main(int argc, char **argv)
   int c;
   //might need to add this back in, turns off error messages
   opterr = 0;
+  char *line;
+  using_history();
+  while ((line=readline("$"))){
+    printf("%s\n",line);
+    add_history(line);
+    free(line);
+  }
 
   while ((c = getopt (argc, argv, "zbc:")) != -1)
     switch (c)
