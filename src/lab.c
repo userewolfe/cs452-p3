@@ -1,15 +1,51 @@
-// #include <string.h>
-// #include "../tests/harness/unity.h"
-// #include "../src/lab.h"
+#include <string.h>
+#include "../tests/harness/unity.h"
+#include "../src/lab.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <bits/getopt_core.h>
+#include <readline/readline.h>
+#include <readline/history.h>
+
+void setUp(void) {
+  // set stuff up here
+  printf("hello world\n");
+  
+}
+
+void tearDown(void) {
+  // clean stuff up here
+}
+
+/**
+    * @brief Set the shell prompt. This function will attempt to load a prompt
+    * from the requested environment variable, if the environment variable is
+    * not set a default prompt of "shell>" is returned.  This function calls
+    * malloc internally and the caller must free the resulting string.
+    *
+    * @param env The environment variable
+    * @return const char* The prompt
+*/
+char *get_prompt(const char *env) {
+    //TODO add error handling, look at old labs
+    char *line = (char *)malloc(256 * sizeof(char)); //allocating memory for a whole line of input
 
 
-// void setUp(void) {
-//   // set stuff up here
-// }
+    //accessing user input
+    using_history();
+    //changing prompt to be prompt set in environment
+    while ((line=readline(env))){
+        printf("%s\n",line);
 
-// void tearDown(void) {
-//   // clean stuff up here
-// }
+
+        add_history(line);  
+        free(line);
+  }
+  return 0;
+
+}
 
 
 // void test_cmd_parse2(void)
@@ -162,17 +198,17 @@
 // int main(void) {
 //   UNITY_BEGIN();
 //   RUN_TEST(test_cmd_parse);
-// //   RUN_TEST(test_cmd_parse2);
-// //   RUN_TEST(test_trim_white_no_whitespace);
-// //   RUN_TEST(test_trim_white_start_whitespace);
-// //   RUN_TEST(test_trim_white_end_whitespace);
-// //   RUN_TEST(test_trim_white_both_whitespace_single);
-// //   RUN_TEST(test_trim_white_both_whitespace_double);
-// //   RUN_TEST(test_trim_white_all_whitespace);
-// //   RUN_TEST(test_get_prompt_default);
-// //   RUN_TEST(test_get_prompt_custom);
-// //   RUN_TEST(test_ch_dir_home);
-// //   RUN_TEST(test_ch_dir_root);
+//   RUN_TEST(test_cmd_parse2);
+//   RUN_TEST(test_trim_white_no_whitespace);
+//   RUN_TEST(test_trim_white_start_whitespace);
+//   RUN_TEST(test_trim_white_end_whitespace);
+//   RUN_TEST(test_trim_white_both_whitespace_single);
+//   RUN_TEST(test_trim_white_both_whitespace_double);
+//   RUN_TEST(test_trim_white_all_whitespace);
+//   RUN_TEST(test_get_prompt_default);
+//   RUN_TEST(test_get_prompt_custom);
+//   RUN_TEST(test_ch_dir_home);
+//   RUN_TEST(test_ch_dir_root);
 
 //   return UNITY_END();
 // }
