@@ -9,17 +9,30 @@
 
 int main(int argc, char **argv)
 {
+  //are you there world?
   printf("hello world\n");
+
+  //declare-initialize variables
+
+  //flags
   int zflag = 0;
   int bflag = 0;
-  char *cvalue = NULL;
   int index;
   int c;
   //might need to add this back in, turns off error messages
   opterr = 0;
+
+  //input
+  char *cvalue = NULL;
   char *line;
+  //getting prompt from environment
+  const char *name = "MY_PROMPT";
+  const char *prompt = getenv(name);
+
+  //accessing user input
   using_history();
-  while ((line=readline("$"))){
+  //changing prompt to be prompt set in environment
+  while ((line=readline(prompt))){
     printf("%s\n",line);
     add_history(line);
     free(line);
