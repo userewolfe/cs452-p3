@@ -12,14 +12,21 @@ int main(int argc, char **argv)
   //are you there world?
   printf("hello world\n");
 
-    //getting prompt from environment
-    const char *name = "MY_PROMPT";
-    const char *prompt = getenv(name);
-    if(prompt == NULL){
-        prompt = "shell>";
-    }
-    const char *getting_prompt= get_prompt(prompt);
+  //getting prompt from environment
+  const char *name = "MY_PROMPT";
+  char *prompt = get_prompt(name);
+  char *line = (char *)malloc(256 * sizeof(char)); //allocating memory for a whole line of input
 
+
+  //accessing user input
+  using_history();
+  //changing prompt to be prompt set in environment
+  while ((line=readline(prompt))){
+    printf("%s\n",line);
+    add_history(line);  
+    free(line);
+  }
+  
   //declare-initialize variables
 
   //flags
@@ -33,7 +40,7 @@ int main(int argc, char **argv)
 
   //input
   char *cvalue = NULL;
-  get_prompt();
+  
 
   while ((c = getopt (argc, argv, "zbc:")) != -1)
     switch (c)
@@ -73,6 +80,7 @@ int main(int argc, char **argv)
   for (index = optind; index < argc; index++)
     printf ("Non-option argument %s\n", argv[index]);
 
-
+  free(name);
+  free(prompt);
   return 0;
 }

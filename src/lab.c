@@ -9,15 +9,15 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-void setUp(void) {
-  // set stuff up here
-  printf("hello world\n");
+// void setUp(void) {
+//   // set stuff up here
+//   printf("hello world\n");
   
-}
+// }
 
-void tearDown(void) {
-  // clean stuff up here
-}
+// void tearDown(void) {
+//   // clean stuff up here
+// }
 
 /**
     * @brief Set the shell prompt. This function will attempt to load a prompt
@@ -30,20 +30,17 @@ void tearDown(void) {
 */
 char *get_prompt(const char *env) {
     //TODO add error handling, look at old labs
-    char *line = (char *)malloc(256 * sizeof(char)); //allocating memory for a whole line of input
+    const char *prompt = getenv(env);
 
+    if(prompt != NULL){
+      char *actual_prompt = (char *)malloc((strlen(prompt) + 1) * sizeof(char));
+      strcpy(actual_prompt, prompt);
+      return actual_prompt;
+    }
 
-    //accessing user input
-    using_history();
-    //changing prompt to be prompt set in environment
-    while ((line=readline(env))){
-        printf("%s\n",line);
-
-
-        add_history(line);  
-        free(line);
-  }
-  return 0;
+    char *actual_prompt = (char *)malloc(7 * sizeof(char));
+    strcpy(actual_prompt, "shell>");
+    return actual_prompt;
 
 }
 
