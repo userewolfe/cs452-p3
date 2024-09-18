@@ -54,7 +54,7 @@
     if (front_index == 0 && back_index == 0){
       return line;
     }
-    //todo null termination
+    //todo null termination possibly
     //getting the new line's shortened length 
     size_t new_line_length = strlen(line) - front_index - (back_index-strlen(line));
     //creating new line
@@ -74,7 +74,11 @@ void getInput(struct shell *sh) {
   
   //STARTING PROGRAM
   char *line = (char *)malloc(256 * sizeof(char)); //allocating memory for a whole line of input
-  
+  if(line == NULL){
+      fprintf(stderr,"failed to allocate memory for line");
+      abort;
+  }
+
   //accessing user input
   using_history();
 
@@ -103,17 +107,25 @@ void getInput(struct shell *sh) {
     * @return const char* The prompt
 */
 char *get_prompt(const char *env) {
+  printf("in get prompt\n");
     //TODO add error handling, look at old labs
     const char *prompt = getenv(env);
 
     if(prompt != NULL){
+      printf("in get prompt !=null\n");
       char *actual_prompt = (char *)malloc((strlen(prompt) + 1) * sizeof(char));
       strcpy(actual_prompt, prompt);
       return actual_prompt;
     }
 
     char *actual_prompt = (char *)malloc(7 * sizeof(char));
+    
+    if(actual_prompt == NULL){
+      fprintf(stderr,"failed to allocate memory for actual_prompt");
+      abort;
+    }
     strcpy(actual_prompt, "shell>");
+    printf("in get promp did strcpy\n");
     return actual_prompt;
 
 }
@@ -189,14 +201,21 @@ char *get_prompt(const char *env) {
    * @param sh
    */
   void sh_init(struct shell *sh){
+    printf("in get sh_init\n");
     sh->shell_is_interactive = 1;
     sh->shell_pgid = 1;
     sh->shell_terminal = 1;
     //getting prompt from environment
     const char *name = "MY_PROMPT";
     char *env_prompt = get_prompt(name);
-    sh->prompt = (char *)malloc(strlen(env_prompt)*sizeof(char));
+    sh->prompt = (char *)malloc((strlen(env_prompt)+1)*sizeof(char));
+    if(sh->prompt == NULL){
+      fprintf(stderr,"failed to allocate memory for shell struct's prompt");
+      abort;
+    }
+    
     strcpy(sh->prompt, env_prompt);
+    printf("in get promp did strcpy\n");
 
     getInput(sh);
   }
