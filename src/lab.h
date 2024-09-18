@@ -30,53 +30,53 @@ extern "C"
    * @brief Set the shell prompt. This function will attempt to load a prompt
    * from the requested environment variable, if the environment variable is
    * not set a default prompt of "shell>" is returned.  This function calls
-   * malloc internally and the caller must free the resulting string.
+   * malloc internally and the callersh_init must free the resulting string.
    *
    * @param env The environment variable
    * @return const char* The prompt
    */
   char *get_prompt(const char *env);
 
-  /**
-   * Changes the current working directory of the shell. Uses the linux system
-   * call chdir. With no arguments the users home directory is used as the
-   * directory to change to.
-   *
-   * @param dir The directory to change to
-   * @return  On success, zero is returned.  On error, -1 is returned, and
-   * errno is set to indicate the error.
-   */
-  int change_dir(char **dir);
+  // /**
+  //  * Changes the current working directory of the shell. Uses the linux system
+  //  * call chdir. With no arguments the users home directory is used as the
+  //  * directory to change to.
+  //  *
+  //  * @param dir The directory to change to
+  //  * @return  On success, zero is returned.  On error, -1 is returned, and
+  //  * errno is set to indicate the error.
+  //  */
+  // int change_dir(char **dir);
 
-  /**
-   * @brief Convert line read from the user into to format that will work with
-   * execvp. We limit the number of arguments to ARG_MAX loaded from sysconf.
-   * This function allocates memory that must be reclaimed with the cmd_free
-   * function.
-   *
-   * @param line The line to process
-   *
-   * @return The line read in a format suitable for exec
-   */
-  char **cmd_parse(char const *line);
+  // /**
+  //  * @brief Convert line read from the user into to format that will work with
+  //  * execvp. We limit the number of arguments to ARG_MAX loaded from sysconf.
+  //  * This function allocates memory that must be reclaimed with the cmd_free
+  //  * function.
+  //  *
+  //  * @param line The line to process
+  //  *
+  //  * @return The line read in a format suitable for exec
+  //  */
+  // char **cmd_parse(char const *line);
 
-  /**
-   * @brief Free the line that was constructed with parse_cmd
-   *
-   * @param line the line to free
-   */
-  void cmd_free(char ** line);
+  // /**
+  //  * @brief Free the line that was constructed with parse_cmd
+  //  *
+  //  * @param line the line to free
+  //  */
+  // void cmd_free(char ** line);
 
-  /**
-   * @brief Trim the whitespace from the start and end of a string.
-   * For example "   ls -a   " becomes "ls -a". This function modifies
-   * the argument line so that all printable chars are moved to the
-   * front of the string
-   *
-   * @param line The line to trim
-   * @return The new line with no whitespace
-   */
-  char *trim_white(char *line);
+  // /**
+  //  * @brief Trim the whitespace from the start and end of a string.
+  //  * For example "   ls -a   " becomes "ls -a". This function modifies
+  //  * the argument line so that all printable chars are moved to the
+  //  * front of the string
+  //  *
+  //  * @param line The line to trim
+  //  * @return The new line with no whitespace
+  //  */
+  // char *trim_white(char *line);
 
 
   /**
@@ -104,13 +104,13 @@ extern "C"
    */
   void sh_init(struct shell *sh);
 
-  /**
-   * @brief Destroy shell. Free any allocated memory and resources and exit
-   * normally.
-   *
-   * @param sh
-   */
-  void sh_destroy(struct shell *sh);
+  // /**
+  //  * @brief Destroy shell. Free any allocated memory and resources and exit
+  //  * normally.
+  //  *
+  //  * @param sh
+  //  */
+  // void sh_destroy(struct shell *sh);
 
   /**
    * @brief Parse command line args from the user when the shell was launched

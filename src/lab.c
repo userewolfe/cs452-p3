@@ -22,10 +22,70 @@
   //   char *prompt;
   // };
 
-void setUp(void) {
+  /**
+   * @brief Trim the whitespace from the start and end of a string.
+   * For example "   ls -a   " becomes "ls -a". This function modifies
+   * the argument line so that all printable chars are moved to the
+   * front of the string
+   *
+   * @param line The line to trim
+   * @return The new line with no whitespace
+   */
+  char *trim_white(char *line){
+    int front_index = 0;
+    int back_index = 0;
+    //finding leading whitespace
+    for (size_t i = 0; i < strlen(line); i++)
+    {
+      if (line[i] != ' '){
+        front_index = i;
+        break;
+      }
+    }
+    //finding trailing whitespace
+    for (size_t i = strlen(line); i > 0; i--)
+    {
+      if (line[i] != ' '){
+        back_index = i;
+        break;
+      }
+    }
+    //if there were no spaces, just return line
+    if (front_index == 0 && back_index == 0){
+      return line;
+    }
+    //todo null termination
+    //getting the new line's shortened length 
+    size_t new_line_length = strlen(line) - front_index - (back_index-strlen(line));
+    //creating new line
+    char *new_line = (char *)malloc(new_line_length*sizeof(char));
+    for(size_t i = front_index; i < back_index-strlen(line); i++){
+      size_t j = 0;
+      new_line[j] =line[i]; 
+      j++;
+    }
+    return new_line;
+  }
+
+void getInput(struct shell *sh) {
+  
   // set stuff up here
   printf("In set up\n");
-  struct shell shelly;
+  
+  //STARTING PROGRAM
+  char *line = (char *)malloc(256 * sizeof(char)); //allocating memory for a whole line of input
+  
+  //accessing user input
+  using_history();
+
+  //changing prompt to be prompt set in environment
+  while ((line=readline(sh->prompt))){
+    printf("%s\n",line);
+    add_history(line);
+    char *new_line = trim_white(line);
+    //cmd_parse(trim_white(line));
+    free(line);
+  }
   
 }
 
@@ -59,74 +119,64 @@ char *get_prompt(const char *env) {
 }
 
 
-  /**
-   * Changes the current working directory of the shell. Uses the linux system
-   * call chdir. With no arguments the users home directory is used as the
-   * directory to change to.
-   *
-   * @param dir The directory to change to
-   * @return  On success, zero is returned.  On error, -1 is returned, and
-   * errno is set to indicate the error.
-   */
-  int change_dir(char **dir){
-    //TODO
-    return 2;
-  }
+  // /**
+  //  * Changes the current working directory of the shell. Uses the linux system
+  //  * call chdir. With no arguments the users home directory is used as the
+  //  * directory to change to.
+  //  *
+  //  * @param dir The directory to change to
+  //  * @return  On success, zero is returned.  On error, -1 is returned, and
+  //  * errno is set to indicate the error.
+  //  */
+  // int change_dir(char **dir){
+  //   //TODO
+  //   return 2;
+  // }
 
-  /**
-   * @brief Convert line read from the user into to format that will work with
-   * execvp. We limit the number of arguments to ARG_MAX loaded from sysconf.
-   * This function allocates memory that must be reclaimed with the cmd_free
-   * function.
-   *
-   * @param line The line to process
-   *
-   * @return The line read in a format suitable for exec
-   */
-  char **cmd_parse(char const *line){
-    //TODO
-    return 't';
-  }
+  // /**
+  //  * @brief Convert line read from the user into to format that will work with
+  //  * execvp. We limit the number of arguments to ARG_MAX loaded from sysconf.
+  //  * This function allocates memory that must be reclaimed with the cmd_free
+  //  * function.
+  //  *
+  //  * @param line The line to process
+  //  *
+  //  * @return The line read in a format suitable for exec
+  //  */
+  // char **cmd_parse(char const *line){
 
-  /**
-   * @brief Free the line that was constructed with parse_cmd
-   *
-   * @param line the line to free
-   */
-  void cmd_free(char ** line){
-    //TODO
-  }
+  //   char *string = "string";
+  //   //todo
+  //   return string;
+  // }
 
-  /**
-   * @brief Trim the whitespace from the start and end of a string.
-   * For example "   ls -a   " becomes "ls -a". This function modifies
-   * the argument line so that all printable chars are moved to the
-   * front of the string
-   *
-   * @param line The line to trim
-   * @return The new line with no whitespace
-   */
-  char *trim_white(char *line){
-    //TODO
-    return 't';
-  }
+  // /**
+  //  * @brief Free the line that was constructed with parse_cmd
+  //  *
+  //  * @param line the line to free
+  //  */
+  // void cmd_free(char ** line){
+  //   //TODO
+  // }
+
+  
 
 
-  /**
-   * @brief Takes an argument list and checks if the first argument is a
-   * built in command such as exit, cd, jobs, etc. If the command is a
-   * built in command this function will handle the command and then return
-   * true. If the first argument is NOT a built in command this function will
-   * return false.
-   *
-   * @param sh The shell
-   * @param argv The command to check
-   * @return True if the command was a built in command
-   */
-  bool do_builtin(struct shell *sh, char **argv){
-    //TODO
-    return false;
-  }
+  // /**
+  //  * @brief Takes an argument list and checks if the first argument is a
+  //  * built in command such as exit, cd, jobs, etc. If the command is a
+  //  * built in command this function will handle the command and then return
+  //  * true. If the first argument is NOT a built in command this function will
+  //  * return false.
+  //  *
+  //  * @param sh The shell
+  //  * @param argv The command to check
+  //  * @return True if the command was a built in command
+  //  */
+  // bool do_builtin(struct shell *sh, char **argv){
+  //   //TODO
+  //   return true;
+  // }
 
   /**
    * @brief Initialize the shell for use. Allocate all data structures
@@ -139,79 +189,40 @@ char *get_prompt(const char *env) {
    * @param sh
    */
   void sh_init(struct shell *sh){
-    //TODO
+    sh->shell_is_interactive = 1;
+    sh->shell_pgid = 1;
+    sh->shell_terminal = 1;
+    //getting prompt from environment
+    const char *name = "MY_PROMPT";
+    char *env_prompt = get_prompt(name);
+    sh->prompt = (char *)malloc(strlen(env_prompt)*sizeof(char));
+    strcpy(sh->prompt, env_prompt);
+
+    getInput(sh);
   }
 
-  /**
-   * @brief Destroy shell. Free any allocated memory and resources and exit
-   * normally.
-   *
-   * @param sh
-   */
-  void sh_destroy(struct shell *sh){
-    //TODO
-  }
+  // /**
+  //  * @brief Destroy shell. Free any allocated memory and resources and exit
+  //  * normally.
+  //  *
+  //  * @param sh
+  //  */
+  // void sh_destroy(struct shell *sh){
+    //free(prompt);
+  //   //TODO
+  // }
 
-  /**
-   * @brief Parse command line args from the user when the shell was launched
-   *
-   * @param argc Number of args
-   * @param argv The arg array
-   */
-  void parse_args(int argc, char **argv){
-    printf("in parse function\n");
-      //declare-initialize variables
-    //flags
-    int zflag = 0;
-    int bflag = 0;
-    int index;
-    int c;
-    //might need to add this back in, turns off error messages
-    opterr = 0;
-    char *cvalue = NULL;
+  // /**
+  //  * @brief Parse command line args from the user when the shell was launched
+  //  *
+  //  * @param argc Number of args
+  //  * @param argv The arg array
+  //  */
+  // void parse_args(int argc, char **argv){
+  //   printf("in parse function\n");
+    
 
-    while ((c = getopt (argc, argv, "zbc:")) != -1)
-      switch (c)
-        {
-        case 'z':
-          zflag = 1;
-          break;
-        case 'b':
-          bflag = 1;
-          break;
-        case 'c':
-          //arg parameter for c
-          cvalue = optarg;
-          break;
-        case '?':
-          if (optopt == 'c')
-            fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-          else if (isprint (optopt))
-            fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-          else
-            fprintf (stderr,
-                    "Unknown option character `\\x%x'.\n",
-                    optopt);
-          return 1;
-        default:
-          abort ();
-        }
-
-    printf ("zflag = %d, bflag = %d, cvalue = %s\n",
-            zflag, bflag, cvalue);
-
-    if (zflag > 0){
-      printf ("horray you picked z\n");
-      fprintf(stdout, "version %d.%d\n", lab_VERSION_MAJOR, lab_VERSION_MINOR);
-      return 0;
-    }
-
-    for (index = optind; index < argc; index++){
-      printf ("Non-option argument %s\n", argv[index]);
-      return 1;
-    }
-
-  }
+  // }
 
 
 
