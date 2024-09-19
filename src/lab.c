@@ -42,11 +42,11 @@
         break;
       }
     }
-    //finding trailing whitespace
-    for (size_t i = strlen(line); i > 0; i--)
+    //finding trailing whitespace but ignoring null character
+    for (int i = strlen(line)-1; i >= 0; i--)
     {
       //accounting for null terminator
-      if (line[i-1] != ' '){
+      if (line[i] != ' '){
         back_index = i;
         break;
       }
@@ -57,7 +57,7 @@
     }
     //todo null termination possibly
     //getting the new line's shortened length 
-    size_t new_line_length = strlen(line) - front_index - (back_index-strlen(line + 1);
+    size_t new_line_length = strlen(line) - front_index - (back_index-strlen(line + 1));
     //creating new line
     char *new_line = (char *)malloc(new_line_length*sizeof(char));
     for(size_t i = front_index; i < back_index-strlen(line); i++){
@@ -68,31 +68,31 @@
     return new_line;
   }
 
-void getInput(struct shell *sh) {
-  
-  // set stuff up here
-  printf("In set up\n");
-  
-  //STARTING PROGRAM
-  char *line = (char *)malloc(256 * sizeof(char)); //allocating memory for a whole line of input
-  if(line == NULL){
-      fprintf(stderr,"failed to allocate memory for line");
-      abort;
-  }
+  void getInput(struct shell *sh) {
+    
+    // set stuff up here
+    printf("In set up\n");
+    
+    //STARTING PROGRAM
+    char *line = (char *)malloc(256 * sizeof(char)); //allocating memory for a whole line of input
+    if(line == NULL){
+        fprintf(stderr,"failed to allocate memory for line");
+        abort;
+    }
 
-  //accessing user input
-  using_history();
+    //accessing user input
+    using_history();
 
-  //changing prompt to be prompt set in environment
-  while ((line=readline(sh->prompt))){
-    printf("%s\n",line);
-    add_history(line);
-    char *new_line = trim_white(line);
-    //cmd_parse(trim_white(line));
-    free(line);
+    //changing prompt to be prompt set in environment
+    while ((line=readline(sh->prompt))){
+      printf("%s\n",line);
+      add_history(line);
+      char *new_line = trim_white(line);
+      //cmd_parse(trim_white(line));
+      free(line);
+    }
+    
   }
-  
-}
 
 // void tearDown(void) {
 //   // clean stuff up here
@@ -163,14 +163,14 @@ char *get_prompt(const char *env) {
   //   return string;
   // }
 
-  // /**
-  //  * @brief Free the line that was constructed with parse_cmd
-  //  *
-  //  * @param line the line to free
-  //  */
-  // void cmd_free(char ** line){
-  //   //TODO
-  // }
+  /**
+   * @brief Free the line that was constructed with parse_cmd
+   *
+   * @param line the line to free
+   */
+  void cmd_free(char ** line){
+    //TODO
+  }
 
   
 
@@ -216,6 +216,7 @@ char *get_prompt(const char *env) {
     }
     
     strcpy(sh->prompt, env_prompt);
+    free(env_prompt);
     printf("in get promp did strcpy\n");
 
     getInput(sh);
@@ -243,170 +244,3 @@ char *get_prompt(const char *env) {
     
 
   // }
-
-
-
-// void test_cmd_parse2(void)
-// {
-//      //The string we want to parse from the user.
-//      //foo -v
-//      char *stng = (char*)malloc(sizeof(char)*7);
-//      strcpy(stng, "foo -v");
-//      char **actual = cmd_parse(stng);
-//      //construct our expected output
-//      size_t n = sizeof(char*) * 6;
-//      char **expected = (char**) malloc(sizeof(char*) *6);
-//      memset(expected,0,n);
-//      expected[0] = (char*)malloc(sizeof(char)*4);
-//      expected[1] = (char*)malloc(sizeof(char)*3);
-//      expected[2] = (char*)NULL;
-
-//      strcpy(expected[0], "foo");
-//      strcpy(expected[1], "-v");
-//      TEST_ASSERT_EQUAL_STRING(expected[0],actual[0]);
-//      TEST_ASSERT_EQUAL_STRING(expected[1],actual[1]);
-//      TEST_ASSERT_FALSE(actual[2]);
-//      free(expected[0]);
-//      free(expected[1]);
-//      free(expected);
-// }
-
-// void test_cmd_parse(void)
-// {
-//      char **rval = cmd_parse("ls -a -l");
-//      TEST_ASSERT_TRUE(rval);
-//      TEST_ASSERT_EQUAL_STRING("ls", rval[0]);
-//      TEST_ASSERT_EQUAL_STRING("-a", rval[1]);
-//      TEST_ASSERT_EQUAL_STRING("-l", rval[2]);
-//      TEST_ASSERT_EQUAL_STRING(NULL, rval[3]);
-//      TEST_ASSERT_FALSE(rval[3]);
-//      cmd_free(rval);
-// }
-
-// void test_trim_white_no_whitespace(void)
-// {
-//      char *line = (char*) calloc(10, sizeof(char));
-//      strncpy(line, "ls -a", 10);
-//      char *rval = trim_white(line);
-//      TEST_ASSERT_EQUAL_STRING("ls -a", rval);
-//      free(line);
-// }
-
-// void test_trim_white_start_whitespace(void)
-// {
-//      char *line = (char*) calloc(10, sizeof(char));
-//      strncpy(line, "  ls -a", 10);
-//      char *rval = trim_white(line);
-//      TEST_ASSERT_EQUAL_STRING("ls -a", rval);
-//      free(line);
-// }
-
-// void test_trim_white_end_whitespace(void)
-// {
-//      char *line = (char*) calloc(10, sizeof(char));
-//      strncpy(line, "ls -a  ", 10);
-//      char *rval = trim_white(line);
-//      TEST_ASSERT_EQUAL_STRING("ls -a", rval);
-//      free(line);
-// }
-
-// void test_trim_white_both_whitespace_single(void)
-// {
-//      char *line = (char*) calloc(10, sizeof(char));
-//      strncpy(line, " ls -a ", 10);
-//      char *rval = trim_white(line);
-//      TEST_ASSERT_EQUAL_STRING("ls -a", rval);
-//      free(line);
-// }
-
-// void test_trim_white_both_whitespace_double(void)
-// {
-//      char *line = (char*) calloc(10, sizeof(char));
-//      strncpy(line, "  ls -a  ", 10);
-//      char *rval = trim_white(line);
-//      TEST_ASSERT_EQUAL_STRING("ls -a", rval);
-//      free(line);
-// }
-
-// void test_trim_white_all_whitespace(void)
-// {
-//      char *line = (char*) calloc(10, sizeof(char));
-//      strncpy(line, "  ", 10);
-//      char *rval = trim_white(line);
-//      TEST_ASSERT_EQUAL_STRING("", rval);
-//      free(line);
-// }
-
-// void test_trim_white_mostly_whitespace(void)
-// {
-//      char *line = (char*) calloc(10, sizeof(char));
-//      strncpy(line, "    a    ", 10);
-//      char *rval = trim_white(line);
-//      TEST_ASSERT_EQUAL_STRING("a", rval);
-//      free(line);
-// }
-
-// void test_get_prompt_default(void)
-// {
-//      char *prompt = get_prompt("MY_PROMPT");
-//      TEST_ASSERT_EQUAL_STRING(prompt, "shell>");
-//      free(prompt);
-// }
-
-// void test_get_prompt_custom(void)
-// {
-//      const char* prmpt = "MY_PROMPT";
-//      if(setenv(prmpt,"foo>",true)){
-//           TEST_FAIL();
-//      }
-
-//      char *prompt = get_prompt(prmpt);
-//      TEST_ASSERT_EQUAL_STRING(prompt, "foo>");
-//      free(prompt);
-//      unsetenv(prmpt);
-// }
-
-// void test_ch_dir_home(void)
-// {
-//      char *line = (char*) calloc(10, sizeof(char));
-//      strncpy(line, "cd", 10);
-//      char **cmd = cmd_parse(line);
-//      char *expected = getenv("HOME");
-//      change_dir(cmd);
-//      char *actual = getcwd(NULL,0);
-//      TEST_ASSERT_EQUAL_STRING(expected, actual);
-//      free(line);
-//      free(actual);
-//      cmd_free(cmd);
-// }
-
-// void test_ch_dir_root(void)
-// {
-//      char *line = (char*) calloc(10, sizeof(char));
-//      strncpy(line, "cd /", 10);
-//      char **cmd = cmd_parse(line);
-//      change_dir(cmd);
-//      char *actual = getcwd(NULL,0);
-//      TEST_ASSERT_EQUAL_STRING("/", actual);
-//      free(line);
-//      free(actual);
-//      cmd_free(cmd);
-// }
-
-// int main(void) {
-//   UNITY_BEGIN();
-//   RUN_TEST(test_cmd_parse);
-//   RUN_TEST(test_cmd_parse2);
-//   RUN_TEST(test_trim_white_no_whitespace);
-//   RUN_TEST(test_trim_white_start_whitespace);
-//   RUN_TEST(test_trim_white_end_whitespace);
-//   RUN_TEST(test_trim_white_both_whitespace_single);
-//   RUN_TEST(test_trim_white_both_whitespace_double);
-//   RUN_TEST(test_trim_white_all_whitespace);
-//   RUN_TEST(test_get_prompt_default);
-//   RUN_TEST(test_get_prompt_custom);
-//   RUN_TEST(test_ch_dir_home);
-//   RUN_TEST(test_ch_dir_root);
-
-//   return UNITY_END();
-// }
