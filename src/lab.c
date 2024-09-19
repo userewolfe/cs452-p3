@@ -173,22 +173,51 @@ char *get_prompt(const char *env) {
   //   return 2;
   // }
 
-  // /**
-  //  * @brief Convert line read from the user into to format that will work with
-  //  * execvp. We limit the number of arguments to ARG_MAX loaded from sysconf.
-  //  * This function allocates memory that must be reclaimed with the cmd_free
-  //  * function.
-  //  *
-  //  * @param line The line to process
-  //  *
-  //  * @return The line read in a format suitable for exec
-  //  */
-  // char **cmd_parse(char const *line){
+  /**
+   * @brief Convert line read from the user into to format that will work with
+   * execvp. We limit the number of arguments to ARG_MAX loaded from sysconf.
+   * This function allocates memory that must be reclaimed with the cmd_free
+   * function.
+   *
+   * @param line The line to process
+   *
+   * @return The line read in a format suitable for exec
+   */
+  char **cmd_parse(char const *line){
+    //creating array of strings that are arguments
+    char **strings = (char **)malloc(_SC_ARG_MAX * sizeof(char));
+      if(strings == NULL){
+      fprintf(stderr,"failed to allocate memory for parsed string array");
+      abort;
+      }
+    
+    //allocating string sizes
+    int j = 0;
+    for (int i = 0; i < (int)strlen(line); i++) {
+      //new string so start counting again
+      j = 0;
+      //while the character at this index is not a space increment j
+      while (!isspace((unsigned char)line[i])){
+        j++;
+      }
+      //set the size of that string plus null pointer
+      strings[i] = (char *)malloc((j + 1) * sizeof(char));
+    }
 
-  //   char *string = "string";
-  //   //todo
-  //   return string;
-  // }
+    //transfering strings
+    int j = 0;
+    for (int i = 0; i < (int)strlen(line); i++) {
+      //new string so start counting again
+      j = 0;
+      while (strlen(strings[i])> j){
+        strings[i][j]= line[]
+      }
+      //set the size of that string plus null pointer
+      strings[i] = (char *)malloc((j + 1) * sizeof(char));
+    }
+
+    return strings;
+  }
 
   /**
    * @brief Free the line that was constructed with parse_cmd
