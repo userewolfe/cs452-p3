@@ -35,36 +35,59 @@
     int front_index = 0;
     int back_index = 0;
     //finding leading whitespace
-    for (size_t i = 0; i < strlen(line); i++)
+    for (int i = 0; i < (int)strlen(line); i++)
     {
-      if (line[i] != ' '){
+      if (!isspace((unsigned char)line[i])){
         front_index = i;
         break;
       }
+      //if there were all blanks
+      if (i == ((int)strlen(line) - 1)){
+        front_index = i;
+      }
+
     }
     //finding trailing whitespace but ignoring null character
-    for (int i = strlen(line)-1; i >= 0; i--)
+    for (int i = (int)strlen(line) - 1; i >= 0; i--)
     {
       //accounting for null terminator
-      if (line[i] != ' '){
+      if (!isspace((unsigned char)line[i])){
         back_index = i;
         break;
       }
+
     }
     //if there were no spaces, just return line
-    if (front_index == 0 && back_index == 0){
+    if (front_index == 0 && back_index == (int)strlen(line)-1){
       return line;
     }
-    //todo null termination possibly
+
+    //if all spaces
+    if(front_index == ((int)strlen(line)-1)){
+      char *new_line =(char *)malloc(1);
+      if(new_line == NULL){
+      fprintf(stderr,"failed to allocate memory for new_line");
+      abort();
+      }
+      new_line[0] = '\0';
+      return new_line;
+    }
+
     //getting the new line's shortened length 
-    size_t new_line_length = strlen(line) - front_index - (back_index-strlen(line + 1));
+    size_t new_line_length = back_index - front_index + 1;
     //creating new line
-    char *new_line = (char *)malloc(new_line_length*sizeof(char));
-    for(size_t i = front_index; i < back_index-strlen(line); i++){
-      size_t j = 0;
+    char *new_line = (char *)malloc((new_line_length + 1)*sizeof(char));
+    if(new_line == NULL){
+      fprintf(stderr,"failed to allocate memory for new_line");
+      abort();
+    }
+    int j = 0;
+    for(int i = front_index; i <= back_index; i++){
       new_line[j] =line[i]; 
       j++;
     }
+    new_line[j] = '\0';
+
     return new_line;
   }
 
@@ -77,7 +100,7 @@
     char *line = (char *)malloc(256 * sizeof(char)); //allocating memory for a whole line of input
     if(line == NULL){
         fprintf(stderr,"failed to allocate memory for line");
-        abort;
+        abort();
     }
 
     //accessing user input
@@ -115,6 +138,10 @@ char *get_prompt(const char *env) {
     if(prompt != NULL){
       printf("in get prompt !=null\n");
       char *actual_prompt = (char *)malloc((strlen(prompt) + 1) * sizeof(char));
+      if(actual_prompt == NULL){
+        fprintf(stderr,"failed to allocate memory for actual_prompt");
+        abort;
+      }
       strcpy(actual_prompt, prompt);
       return actual_prompt;
     }
@@ -233,14 +260,65 @@ char *get_prompt(const char *env) {
   //   //TODO
   // }
 
-  // /**
-  //  * @brief Parse command line args from the user when the shell was launched
-  //  *
-  //  * @param argc Number of args
-  //  * @param argv The arg array
-  //  */
-  // void parse_args(int argc, char **argv){
-  //   printf("in parse function\n");
-    
+  /**
+   * @brief Parse command line args from the user when the shell was launched
+   *
+   * @param argc Number of args
+   * @param argv The arg array
+   */
+  void parse_args(int argc, char **argv){
+    printf("in parse function\n");
+      //are you there world?
+  printf("hello world\n");
 
-  // }
+    //declare-initialize variables
+    //flags
+    int zflag = 0;
+    int bflag = 0;
+    int index;
+    int c;
+    //might need to add this back in, turns off error messages
+    opterr = 0;
+    char *cvalue = NULL;
+
+    while ((c = getopt (argc, argv, "zbc:")) != -1)
+      switch (c)
+        {
+        case 'z':
+          zflag = 1;
+          break;
+        case 'b':
+          bflag = 1;
+          break;
+        case 'c':
+          //arg parameter for c
+          cvalue = optarg;
+          break;
+        case '?':
+          if (optopt == 'c')
+            fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+          else if (isprint (optopt))
+            fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+          else
+            fprintf (stderr,
+                    "Unknown option character `\\x%x'.\n",
+                    optopt);
+        default:
+          abort ();
+        }
+
+    printf ("zflag = %d, bflag = %d, cvalue = %s\n",
+            zflag, bflag, cvalue);
+
+    if (zflag > 0){
+      printf ("horray you picked z\n");
+      fprintf(stdout, "version %d.%d\n", lab_VERSION_MAJOR, lab_VERSION_MINOR);
+      return 0;
+    }
+
+    for (index = optind; index < argc; index++){
+      printf ("Non-option argument %s\n", argv[index]);
+    }
+    return 0;
+
+  }

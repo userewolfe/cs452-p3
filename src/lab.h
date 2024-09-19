@@ -67,16 +67,16 @@ extern "C"
   //  */
   // void cmd_free(char ** line);
 
-  // /**
-  //  * @brief Trim the whitespace from the start and end of a string.
-  //  * For example "   ls -a   " becomes "ls -a". This function modifies
-  //  * the argument line so that all printable chars are moved to the
-  //  * front of the string
-  //  *
-  //  * @param line The line to trim
-  //  * @return The new line with no whitespace
-  //  */
-  // char *trim_white(char *line);
+  /**
+   * @brief Trim the whitespace from the start and end of a string.
+   * For example "   ls -a   " becomes "ls -a". This function modifies
+   * the argument line so that all printable chars are moved to the
+   * front of the string
+   *
+   * @param line The line to trim
+   * @return The new line with no whitespace
+   */
+  char *trim_white(char *line);
 
 
   /**
