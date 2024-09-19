@@ -45,7 +45,8 @@
     //finding trailing whitespace
     for (size_t i = strlen(line); i > 0; i--)
     {
-      if (line[i] != ' '){
+      //accounting for null terminator
+      if (line[i-1] != ' '){
         back_index = i;
         break;
       }
@@ -56,7 +57,7 @@
     }
     //todo null termination possibly
     //getting the new line's shortened length 
-    size_t new_line_length = strlen(line) - front_index - (back_index-strlen(line));
+    size_t new_line_length = strlen(line) - front_index - (back_index-strlen(line + 1);
     //creating new line
     char *new_line = (char *)malloc(new_line_length*sizeof(char));
     for(size_t i = front_index; i < back_index-strlen(line); i++){
