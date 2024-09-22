@@ -157,10 +157,23 @@ char *get_prompt(const char *env) {
    * errno is set to indicate the error.
    */
   int change_dir(char **dir){
+
     //no specified directory, go to home directory
     if(dir == NULL || dir[1] == NULL)
     {
+      //grabbing home directory from environment
       const char *home = getenv("HOME");
+      //if not present, grab home directory with system calls
+      if(home == NULL){
+        struct passwd *nameHome;
+        nameHome = getpwuid(getuid());
+        //if system calls fail, exit with failure
+        if (nameHome == NULL){
+          exit(EXIT_FAILURE);
+        }
+        //copy home directory to home variable
+        strcpy(home, nameHome);
+      }
       chdir(home);
     } else 
     {
@@ -259,8 +272,6 @@ char *get_prompt(const char *env) {
   }
 
   
-
-
   /**
    * @brief Takes an argument list and checks if the first argument is a
    * built in command such as exit, cd, jobs, etc. If the command is a
@@ -273,8 +284,37 @@ char *get_prompt(const char *env) {
    * @return True if the command was a built in command
    */
   bool do_builtin(struct shell *sh, char **argv){
-    //TODO
-    return true;
+
+    //changing directory
+    if (strcmp(argv[0], "cd") == 0){
+      change_dir(argv);
+      return true;
+    }
+
+    //exit
+    if (strcmp(argv[0], "exit") == 0){
+      exit(EXIT_SUCCESS);
+      return true;
+    }
+
+    //history
+    if (strcmp(argv[0], "history") == 0){
+      //not sure if we need this state history
+      HISTORY_STATE *history = history_get_history_state();
+      if(history == NULL){
+        return false;
+      }
+      //history entries
+      HIST_ENTRY **list_commands = history_list();
+      
+      //print history entries
+      for (int i = 0; list_commands[i] != NULL; i++ ){
+        printf("%s\n", list_commands[i]);
+      }
+      return true;
+    }
+
+    return false;
   }
 
   /**
