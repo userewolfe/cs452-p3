@@ -9,18 +9,6 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-// #define lab_VERSION_MAJOR 1
-// #define lab_VERSION_MINOR 0
-// #define UNUSED(x) (void)x;
-
-  // struct shell
-  // {
-  //   int shell_is_interactive;
-  //   pid_t shell_pgid;
-  //   struct termios shell_tmodes;
-  //   int shell_terminal;
-  //   char *prompt;
-  // };
 
   /**
    * @brief Trim the whitespace from the start and end of a string.
@@ -159,19 +147,28 @@ char *get_prompt(const char *env) {
 }
 
 
-  // /**
-  //  * Changes the current working directory of the shell. Uses the linux system
-  //  * call chdir. With no arguments the users home directory is used as the
-  //  * directory to change to.
-  //  *
-  //  * @param dir The directory to change to
-  //  * @return  On success, zero is returned.  On error, -1 is returned, and
-  //  * errno is set to indicate the error.
-  //  */
-  // int change_dir(char **dir){
-  //   //TODO
-  //   return 2;
-  // }
+  /**
+   * Changes the current working directory of the shell. Uses the linux system
+   * call chdir. With no arguments the users home directory is used as the
+   * directory to change to.
+   *
+   * @param dir The directory to change to
+   * @return  On success, zero is returned.  On error, -1 is returned, and
+   * errno is set to indicate the error.
+   */
+  int change_dir(char **dir){
+    //no specified directory, go to home directory
+    if(dir == NULL || dir[1] == NULL)
+    {
+      const char *home = getenv("HOME");
+      chdir(home);
+    } else 
+    {
+      //gelse go to specified directory
+      chdir(dir[1]);
+    }
+    
+  }
 
   /**
    * @brief Convert line read from the user into to format that will work with
@@ -264,21 +261,21 @@ char *get_prompt(const char *env) {
   
 
 
-  // /**
-  //  * @brief Takes an argument list and checks if the first argument is a
-  //  * built in command such as exit, cd, jobs, etc. If the command is a
-  //  * built in command this function will handle the command and then return
-  //  * true. If the first argument is NOT a built in command this function will
-  //  * return false.
-  //  *
-  //  * @param sh The shell
-  //  * @param argv The command to check
-  //  * @return True if the command was a built in command
-  //  */
-  // bool do_builtin(struct shell *sh, char **argv){
-  //   //TODO
-  //   return true;
-  // }
+  /**
+   * @brief Takes an argument list and checks if the first argument is a
+   * built in command such as exit, cd, jobs, etc. If the command is a
+   * built in command this function will handle the command and then return
+   * true. If the first argument is NOT a built in command this function will
+   * return false.
+   *
+   * @param sh The shell
+   * @param argv The command to check
+   * @return True if the command was a built in command
+   */
+  bool do_builtin(struct shell *sh, char **argv){
+    //TODO
+    return true;
+  }
 
   /**
    * @brief Initialize the shell for use. Allocate all data structures
