@@ -184,12 +184,15 @@ char *get_prompt(const char *env) {
    * @return The line read in a format suitable for exec
    */
   char **cmd_parse(char const *line){
+    //getting arg max
+    const long ARG_MAX = sysconf(_SC_ARG_MAX); 
+
     //creating array of strings that are arguments
-    char **strings = (char **)malloc(_SC_ARG_MAX * sizeof(char));
-      if(strings == NULL){
+    char **strings = (char **)malloc(ARG_MAX * sizeof(char *));
+    if(strings == NULL){
       fprintf(stderr,"failed to allocate memory for parsed string array");
       abort();
-      }
+    }
     
     //allocating string sizes and transferring strings to strings array
     // i is going to be the string index for the new strings array
@@ -197,13 +200,16 @@ char *get_prompt(const char *env) {
     // j is going to keep track of index of original line
     int j = 0;
     int k = 0;
-    for (int i = 0; i < _SC_ARG_MAX; i++) {
+    for (int i = 0; i < ARG_MAX - 1; i++) {
+
 
       //new string so start counting again
-      while (!isspace((unsigned char)line[j])){
+      while (!isspace((char)line[j]) && line[j] != '\0'){
         j++;
         k++;
       }
+
+
       //set the size of that string plus null pointer
       strings[i] = (char *)malloc((k + 1) * sizeof(char));
 
@@ -211,36 +217,35 @@ char *get_prompt(const char *env) {
       j -= k;
 
       //transfering strings
-      for (int l = 0; l < k ; l++){
+      for (int l = 0; l < k; l++){
         strings[i][l] = line[j];
         j++;
       }
 
-      //adding null character to new string
-      strings[i][k] = '/0';
+      //adding null character to end of new string
+      strings[i][k] = '\0';
 
       //reset k to use again for next string to parse
       k = 0;
-        
+      
+      //exit condition
       //if we have reached the end of the line
-      if(&line[i] == '/0'){
-        i = _SC_ARG_MAX;
+      if(line[j] == '\0'){
+        strings[i + 1] = NULL;
+        break;
+      }
+
+      //skip the possible space in between arguments(should only be one)
+      j++;
+
+      //exit condition, can't exceed this many arguments
+      if(i == (ARG_MAX - 2)){
+        strings[i + 1] = NULL;
+        break;
       }
       
     }
-
-    // //transfering strings
-    // int j = 0;
-    // for (int i = 0; i < (int)strlen(line); i++) {
-    //   //new string so start counting again
-    //   j = 0;
-    //   while (strlen(strings[i])> j){
-    //     strings[i][j]= line[i];
-    //   }
-    //   //set the size of that string plus null pointer
-    //   strings[i] = (char *)malloc((j + 1) * sizeof(char));
-    // }
-
+    
     return strings;
   }
 
@@ -250,9 +255,10 @@ char *get_prompt(const char *env) {
    * @param line the line to free
    */
   void cmd_free(char ** line){
-    for(int i = 0; i < (int)strlen(line) ; i++ ){
+    for(int i = 0; line[i] != NULL; i++ ){
       free(line[i]);
     }
+    free(line);
   }
 
   

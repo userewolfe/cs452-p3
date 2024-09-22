@@ -181,8 +181,8 @@ int main(void) {
   RUN_TEST(test_trim_white_all_whitespace);
   RUN_TEST(test_get_prompt_default);
   RUN_TEST(test_get_prompt_custom);
-  // RUN_TEST(test_ch_dir_home);
-  // RUN_TEST(test_ch_dir_root);
+//   RUN_TEST(test_ch_dir_home);
+//   RUN_TEST(test_ch_dir_root);
 
   return UNITY_END();
 }
