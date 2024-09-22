@@ -111,8 +111,8 @@
       printf("%s\n",line);
       add_history(line);
       char *new_line = trim_white(line);
-      //cmd_parse(trim_white(line));
-      free(line);
+      char **strings = cmd_parse(trim_white(new_line));
+      cmd_free(strings);
     }
     
   }
@@ -140,7 +140,7 @@ char *get_prompt(const char *env) {
       char *actual_prompt = (char *)malloc((strlen(prompt) + 1) * sizeof(char));
       if(actual_prompt == NULL){
         fprintf(stderr,"failed to allocate memory for actual_prompt");
-        abort;
+        abort();
       }
       strcpy(actual_prompt, prompt);
       return actual_prompt;
@@ -150,7 +150,7 @@ char *get_prompt(const char *env) {
     
     if(actual_prompt == NULL){
       fprintf(stderr,"failed to allocate memory for actual_prompt");
-      abort;
+      abort();
     }
     strcpy(actual_prompt, "shell>");
     printf("in get promp did strcpy\n");
@@ -188,33 +188,58 @@ char *get_prompt(const char *env) {
     char **strings = (char **)malloc(_SC_ARG_MAX * sizeof(char));
       if(strings == NULL){
       fprintf(stderr,"failed to allocate memory for parsed string array");
-      abort;
+      abort();
       }
     
-    //allocating string sizes
+    //allocating string sizes and transferring strings to strings array
+    // i is going to be the string index for the new strings array
+    // k is going to be the length of each parsed string
+    // j is going to keep track of index of original line
     int j = 0;
-    for (int i = 0; i < (int)strlen(line); i++) {
+    int k = 0;
+    for (int i = 0; i < _SC_ARG_MAX; i++) {
+
       //new string so start counting again
-      j = 0;
-      //while the character at this index is not a space increment j
-      while (!isspace((unsigned char)line[i])){
+      while (!isspace((unsigned char)line[j])){
+        j++;
+        k++;
+      }
+      //set the size of that string plus null pointer
+      strings[i] = (char *)malloc((k + 1) * sizeof(char));
+
+      //going back in index to set string contents
+      j -= k;
+
+      //transfering strings
+      for (int l = 0; l < k ; l++){
+        strings[i][l] = line[j];
         j++;
       }
-      //set the size of that string plus null pointer
-      strings[i] = (char *)malloc((j + 1) * sizeof(char));
+
+      //adding null character to new string
+      strings[i][k] = '/0';
+
+      //reset k to use again for next string to parse
+      k = 0;
+        
+      //if we have reached the end of the line
+      if(&line[i] == '/0'){
+        i = _SC_ARG_MAX;
+      }
+      
     }
 
-    //transfering strings
-    int j = 0;
-    for (int i = 0; i < (int)strlen(line); i++) {
-      //new string so start counting again
-      j = 0;
-      while (strlen(strings[i])> j){
-        strings[i][j]= line[]
-      }
-      //set the size of that string plus null pointer
-      strings[i] = (char *)malloc((j + 1) * sizeof(char));
-    }
+    // //transfering strings
+    // int j = 0;
+    // for (int i = 0; i < (int)strlen(line); i++) {
+    //   //new string so start counting again
+    //   j = 0;
+    //   while (strlen(strings[i])> j){
+    //     strings[i][j]= line[i];
+    //   }
+    //   //set the size of that string plus null pointer
+    //   strings[i] = (char *)malloc((j + 1) * sizeof(char));
+    // }
 
     return strings;
   }
@@ -225,7 +250,9 @@ char *get_prompt(const char *env) {
    * @param line the line to free
    */
   void cmd_free(char ** line){
-    //TODO
+    for(int i = 0; i < (int)strlen(line) ; i++ ){
+      free(line[i]);
+    }
   }
 
   
@@ -268,7 +295,7 @@ char *get_prompt(const char *env) {
     sh->prompt = (char *)malloc((strlen(env_prompt)+1)*sizeof(char));
     if(sh->prompt == NULL){
       fprintf(stderr,"failed to allocate memory for shell struct's prompt");
-      abort;
+      abort();
     }
     
     strcpy(sh->prompt, env_prompt);

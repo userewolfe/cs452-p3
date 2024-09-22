@@ -48,24 +48,24 @@ extern "C"
   //  */
   // int change_dir(char **dir);
 
-  // /**
-  //  * @brief Convert line read from the user into to format that will work with
-  //  * execvp. We limit the number of arguments to ARG_MAX loaded from sysconf.
-  //  * This function allocates memory that must be reclaimed with the cmd_free
-  //  * function.
-  //  *
-  //  * @param line The line to process
-  //  *
-  //  * @return The line read in a format suitable for exec
-  //  */
-  // char **cmd_parse(char const *line);
+  /**
+   * @brief Convert line read from the user into to format that will work with
+   * execvp. We limit the number of arguments to ARG_MAX loaded from sysconf.
+   * This function allocates memory that must be reclaimed with the cmd_free
+   * function.
+   *
+   * @param line The line to process
+   *
+   * @return The line read in a format suitable for exec
+   */
+  char **cmd_parse(char const *line);
 
-  // /**
-  //  * @brief Free the line that was constructed with parse_cmd
-  //  *
-  //  * @param line the line to free
-  //  */
-  // void cmd_free(char ** line);
+  /**
+   * @brief Free the line that was constructed with parse_cmd
+   *
+   * @param line the line to free
+   */
+  void cmd_free(char ** line);
 
   /**
    * @brief Trim the whitespace from the start and end of a string.

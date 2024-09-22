@@ -171,8 +171,8 @@ void test_get_prompt_custom(void)
 
 int main(void) {
   UNITY_BEGIN();
-  // RUN_TEST(test_cmd_parse);
-  // RUN_TEST(test_cmd_parse2);
+  RUN_TEST(test_cmd_parse);
+  RUN_TEST(test_cmd_parse2);
   RUN_TEST(test_trim_white_no_whitespace);
   RUN_TEST(test_trim_white_start_whitespace);
   RUN_TEST(test_trim_white_end_whitespace);
