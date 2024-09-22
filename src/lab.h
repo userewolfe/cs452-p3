@@ -37,16 +37,16 @@ extern "C"
    */
   char *get_prompt(const char *env);
 
-  // /**
-  //  * Changes the current working directory of the shell. Uses the linux system
-  //  * call chdir. With no arguments the users home directory is used as the
-  //  * directory to change to.
-  //  *
-  //  * @param dir The directory to change to
-  //  * @return  On success, zero is returned.  On error, -1 is returned, and
-  //  * errno is set to indicate the error.
-  //  */
-  // int change_dir(char **dir);
+  /**
+   * Changes the current working directory of the shell. Uses the linux system
+   * call chdir. With no arguments the users home directory is used as the
+   * directory to change to.
+   *
+   * @param dir The directory to change to
+   * @return  On success, zero is returned.  On error, -1 is returned, and
+   * errno is set to indicate the error.
+   */
+  int change_dir(char **dir);
 
   /**
    * @brief Convert line read from the user into to format that will work with

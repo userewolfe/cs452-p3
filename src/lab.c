@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pwd.h>
 #include <bits/getopt_core.h>
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -95,13 +96,37 @@
     using_history();
 
     //changing prompt to be prompt set in environment
-    while ((line=readline(sh->prompt))){
-      printf("%s\n",line);
-      add_history(line);
+    while ((line=readline(sh->prompt) )){
       char *new_line = trim_white(line);
-      char **strings = cmd_parse(trim_white(new_line));
+      while (strcmp(new_line, "") == 0){
+        printf("%s\n",new_line);
+        line=readline(sh->prompt);
+        new_line = trim_white(line);
+      }
+      printf("%s\n",new_line);
+
+      add_history(new_line);
+      char **strings = cmd_parse(new_line);
+      bool is_command = do_builtin(sh, strings);
+      //exit
+      if (!is_command && strcmp(strings[0], "exit")){
+        free(line);
+        free(new_line);
+        cmd_free(strings);
+        exit(EXIT_SUCCESS);
+      }
+      //other complication
+      if (!is_command){
+        fprintf(stderr, "not a command");
+        free(line);
+        free(new_line);
+        cmd_free(strings);
+        exit(EXIT_FAILURE);
+      }
       cmd_free(strings);
+      free(new_line);
     }
+    free(line);
     
   }
 
@@ -162,23 +187,25 @@ char *get_prompt(const char *env) {
     if(dir == NULL || dir[1] == NULL)
     {
       //grabbing home directory from environment
-      const char *home = getenv("HOME");
+      char *home = getenv("HOME");
       //if not present, grab home directory with system calls
       if(home == NULL){
         struct passwd *nameHome;
         nameHome = getpwuid(getuid());
         //if system calls fail, exit with failure
         if (nameHome == NULL){
-          exit(EXIT_FAILURE);
+          return -1;
         }
-        //copy home directory to home variable
-        strcpy(home, nameHome);
+        //copy home directory from nameHome password struct to home variable
+        strcpy(home, nameHome->pw_dir);
       }
-      chdir(home);
+      int changed = chdir(home);
+      return changed;
     } else 
     {
-      //gelse go to specified directory
-      chdir(dir[1]);
+      //else go to specified directory
+      int changed = chdir(dir[1]);
+      return changed;
     }
     
   }
@@ -287,14 +314,16 @@ char *get_prompt(const char *env) {
 
     //changing directory
     if (strcmp(argv[0], "cd") == 0){
-      change_dir(argv);
+      int changed = change_dir(argv);
+      if (changed < 0){
+        return false;
+      }
       return true;
     }
 
     //exit
     if (strcmp(argv[0], "exit") == 0){
-      exit(EXIT_SUCCESS);
-      return true;
+      return false;
     }
 
     //history
@@ -309,7 +338,7 @@ char *get_prompt(const char *env) {
       
       //print history entries
       for (int i = 0; list_commands[i] != NULL; i++ ){
-        printf("%s\n", list_commands[i]);
+        printf("%s\n", list_commands[i]->line);
       }
       return true;
     }
@@ -412,12 +441,12 @@ char *get_prompt(const char *env) {
     if (zflag > 0){
       printf ("horray you picked z\n");
       fprintf(stdout, "version %d.%d\n", lab_VERSION_MAJOR, lab_VERSION_MINOR);
-      return 0;
+      abort();
     }
 
     for (index = optind; index < argc; index++){
       printf ("Non-option argument %s\n", argv[index]);
     }
-    return 0;
+    return;
 
   }
