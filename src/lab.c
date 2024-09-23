@@ -48,12 +48,14 @@
     }
     //if there were no spaces, just return line
     if (front_index == 0 && back_index == (int)strlen(line)-1){
-      return line;
+      char *new_line =(char *)malloc((strlen(line)+1)*sizeof(char));
+      strcpy(new_line, line);
+      return new_line;
     }
 
     //if all spaces
     if(front_index == ((int)strlen(line)-1)){
-      char *new_line =(char *)malloc(1);
+      char *new_line =(char *)malloc(1*sizeof(char));
       if(new_line == NULL){
       fprintf(stderr,"failed to allocate memory for new_line");
       abort();
@@ -86,11 +88,12 @@
     printf("In set up\n");
     
     //STARTING PROGRAM
-    char *line = (char *)malloc(256 * sizeof(char)); //allocating memory for a whole line of input
-    if(line == NULL){
-        fprintf(stderr,"failed to allocate memory for line");
-        abort();
-    }
+    char *line; 
+    //(char *)malloc(sizeof(char) + 1); //allocating memory for a whole line of input
+    // if(line == NULL){
+    //     fprintf(stderr,"failed to allocate memory for line");
+    //     abort();
+    // }
 
     //accessing user input
     using_history();
@@ -100,6 +103,7 @@
       char *new_line = trim_white(line);
       while (strcmp(new_line, "") == 0){
         printf("%s\n",new_line);
+        //strcpy(line, '\0');
         line=readline(sh->prompt);
         new_line = trim_white(line);
       }
@@ -109,8 +113,9 @@
       char **strings = cmd_parse(new_line);
       bool is_command = do_builtin(sh, strings);
       //exit
-      if (!is_command && strcmp(strings[0], "exit")){
+      if (!is_command && strcmp(strings[0], "exit") == 0){
         free(line);
+        //might be freeing already freed line
         free(new_line);
         cmd_free(strings);
         exit(EXIT_SUCCESS);
@@ -401,51 +406,29 @@ char *get_prompt(const char *env) {
 
     //declare-initialize variables
     //flags
-    int zflag = 0;
-    int bflag = 0;
-    int index;
+    int vflag = 0;
     int c;
     //might need to add this back in, turns off error messages
     opterr = 0;
     char *cvalue = NULL;
 
-    while ((c = getopt (argc, argv, "zbc:")) != -1)
+    while ((c = getopt (argc, argv, "v")) != -1)
       switch (c)
         {
-        case 'z':
-          zflag = 1;
-          break;
-        case 'b':
-          bflag = 1;
-          break;
-        case 'c':
-          //arg parameter for c
-          cvalue = optarg;
+        case 'v':
+          vflag = 1;
           break;
         case '?':
-          if (optopt == 'c')
-            fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-          else if (isprint (optopt))
-            fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-          else
             fprintf (stderr,
                     "Unknown option character `\\x%x'.\n",
                     optopt);
         default:
-          abort ();
+          return;
         }
-
-    printf ("zflag = %d, bflag = %d, cvalue = %s\n",
-            zflag, bflag, cvalue);
-
-    if (zflag > 0){
-      printf ("horray you picked z\n");
+    if (vflag > 0){
+      printf ("horray you picked v\n");
       fprintf(stdout, "version %d.%d\n", lab_VERSION_MAJOR, lab_VERSION_MINOR);
-      abort();
-    }
-
-    for (index = optind; index < argc; index++){
-      printf ("Non-option argument %s\n", argv[index]);
+      exit(EXIT_SUCCESS);
     }
     return;
 
