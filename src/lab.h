@@ -104,13 +104,13 @@ extern "C"
    */
   void sh_init(struct shell *sh);
 
-  // /**
-  //  * @brief Destroy shell. Free any allocated memory and resources and exit
-  //  * normally.
-  //  *
-  //  * @param sh
-  //  */
-  // void sh_destroy(struct shell *sh);
+  /**
+   * @brief Destroy shell. Free any allocated memory and resources and exit
+   * normally.
+   *
+   * @param sh
+   */
+  void sh_destroy(struct shell *sh);
 
   /**
    * @brief Parse command line args from the user when the shell was launched

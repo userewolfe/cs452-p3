@@ -48,7 +48,7 @@
     }
     //if there were no spaces, just return line
     if (front_index == 0 && back_index == (int)strlen(line)-1){
-      char *new_line =(char *)malloc((strlen(line)+1)*sizeof(char));
+      char *new_line =(char *)malloc((strlen(line) + 1));
       strcpy(new_line, line);
       return new_line;
     }
@@ -67,7 +67,7 @@
     //getting the new line's shortened length 
     size_t new_line_length = back_index - front_index + 1;
     //creating new line
-    char *new_line = (char *)malloc((new_line_length + 1)*sizeof(char));
+    char *new_line = (char *)alloc((new_line_length + 1)*sizeof(char));
     if(new_line == NULL){
       fprintf(stderr,"failed to allocate memory for new_line");
       abort();
@@ -106,18 +106,20 @@
         //strcpy(line, '\0');
         line=readline(sh->prompt);
         new_line = trim_white(line);
-      }
+      }sh_init
       printf("%s\n",new_line);
 
       add_history(new_line);
       char **strings = cmd_parse(new_line);
       bool is_command = do_builtin(sh, strings);
+      fork();
       //exit
       if (!is_command && strcmp(strings[0], "exit") == 0){
         free(line);
         //might be freeing already freed line
         free(new_line);
         cmd_free(strings);
+        sh_destroy(sh);
         exit(EXIT_SUCCESS);
       }
       //other complication
@@ -126,6 +128,7 @@
         free(line);
         free(new_line);
         cmd_free(strings);
+        sh_destroy(sh);
         exit(EXIT_FAILURE);
       }
       cmd_free(strings);
@@ -364,12 +367,17 @@ char *get_prompt(const char *env) {
   void sh_init(struct shell *sh){
     printf("in get sh_init\n");
     sh->shell_is_interactive = 1;
-    sh->shell_pgid = 1;
+    sh->shell_pgid = 1;//get process group function getpgrp()
     sh->shell_terminal = 1;
+    //TODO from tutor, figure out
+    // sh->shell_terminal = STDIN_FILENO;
+    // sh->shell_is_interactive = isatty(sh->shell_terminal);
     //getting prompt from environment
     const char *name = "MY_PROMPT";
-    char *env_prompt = get_prompt(name);
-    sh->prompt = (char *)malloc((strlen(env_prompt)+1)*sizeof(char));
+    // char *env_prompt = get_prompt(name);
+    // sh->prompt = (char *)malloc((strlen(env_prompt)+1)*sizeof(char));
+
+    sh->prompt = get_prompt(name);
     if(sh->prompt == NULL){
       fprintf(stderr,"failed to allocate memory for shell struct's prompt");
       abort();
@@ -382,16 +390,16 @@ char *get_prompt(const char *env) {
     getInput(sh);
   }
 
-  // /**
-  //  * @brief Destroy shell. Free any allocated memory and resources and exit
-  //  * normally.
-  //  *
-  //  * @param sh
-  //  */
-  // void sh_destroy(struct shell *sh){
-    //free(prompt);
-  //   //TODO
-  // }
+  /**
+   * @brief Destroy shell. Free any allocated memory and resources and exit
+   * normally.
+   *
+   * @param sh
+   */
+  void sh_destroy(struct shell *sh){
+    free(sh->prompt);
+    //TODO I am sure there is more to free
+  }
 
   /**
    * @brief Parse command line args from the user when the shell was launched
