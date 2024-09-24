@@ -67,7 +67,7 @@
     //getting the new line's shortened length 
     size_t new_line_length = back_index - front_index + 1;
     //creating new line
-    char *new_line = (char *)alloc((new_line_length + 1)*sizeof(char));
+    char *new_line = (char *)malloc((new_line_length + 1));
     if(new_line == NULL){
       fprintf(stderr,"failed to allocate memory for new_line");
       abort();
@@ -105,8 +105,9 @@
         printf("%s\n",new_line);
         //strcpy(line, '\0');
         line=readline(sh->prompt);
+        free(new_line);
         new_line = trim_white(line);
-      }sh_init
+      }
       printf("%s\n",new_line);
 
       add_history(new_line);
@@ -123,13 +124,14 @@
         exit(EXIT_SUCCESS);
       }
       //other complication
+      //create a child process here
       if (!is_command){
-        fprintf(stderr, "not a command");
-        free(line);
-        free(new_line);
-        cmd_free(strings);
-        sh_destroy(sh);
-        exit(EXIT_FAILURE);
+        // fprintf(stderr, "not a command");
+        // free(line);
+        // free(new_line);
+        // cmd_free(strings);
+        // sh_destroy(sh);
+        // exit(EXIT_FAILURE);
       }
       cmd_free(strings);
       free(new_line);
@@ -366,18 +368,21 @@ char *get_prompt(const char *env) {
    */
   void sh_init(struct shell *sh){
     printf("in get sh_init\n");
-    sh->shell_is_interactive = 1;
-    sh->shell_pgid = 1;//get process group function getpgrp()
+
+    //The BSD-specific getpgrp() call, which takes a single pid argument, is equivalent to getpgid(pid).
+    // sh->shell_pgid = 1;//get process group function getpgrp()
+    // sh->shell_is_interactive = 1;
+
+    sh->shell_pgid = getpgrp();//get process group function getpgrp()
     sh->shell_terminal = 1;
-    //TODO from tutor, figure out
-    // sh->shell_terminal = STDIN_FILENO;
-    // sh->shell_is_interactive = isatty(sh->shell_terminal);
+    sh->shell_terminal = STDIN_FILENO;
+    sh->shell_is_interactive = isatty(sh->shell_terminal);
     //getting prompt from environment
     const char *name = "MY_PROMPT";
-    // char *env_prompt = get_prompt(name);
-    // sh->prompt = (char *)malloc((strlen(env_prompt)+1)*sizeof(char));
+    char *env_prompt = get_prompt(name);
+    sh->prompt = (char *)malloc((strlen(env_prompt)+1)*sizeof(char));
 
-    sh->prompt = get_prompt(name);
+    // sh->prompt = get_prompt(name);
     if(sh->prompt == NULL){
       fprintf(stderr,"failed to allocate memory for shell struct's prompt");
       abort();
