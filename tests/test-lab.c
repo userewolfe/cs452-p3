@@ -14,7 +14,6 @@ void tearDown(void) {
   // clean stuff up here
 }
 
-
 void test_cmd_parse2(void)
 {
      //The string we want to parse from the user.
@@ -38,8 +37,8 @@ void test_cmd_parse2(void)
      free(expected[0]);
      free(expected[1]);
      free(expected);
-     free(stng);
      cmd_free(actual);
+     free(stng);
 }
 
 void test_cmd_parse(void)
@@ -61,7 +60,6 @@ void test_trim_white_no_whitespace(void)
      char *rval = trim_white(line);
      TEST_ASSERT_EQUAL_STRING("ls -a", rval);
      free(line);
-
 }
 
 void test_trim_white_start_whitespace(void)
@@ -71,7 +69,6 @@ void test_trim_white_start_whitespace(void)
      char *rval = trim_white(line);
      TEST_ASSERT_EQUAL_STRING("ls -a", rval);
      free(line);
-     free(rval);
 }
 
 void test_trim_white_end_whitespace(void)
@@ -81,7 +78,6 @@ void test_trim_white_end_whitespace(void)
      char *rval = trim_white(line);
      TEST_ASSERT_EQUAL_STRING("ls -a", rval);
      free(line);
-     free(rval);
 }
 
 void test_trim_white_both_whitespace_single(void)
@@ -91,7 +87,6 @@ void test_trim_white_both_whitespace_single(void)
      char *rval = trim_white(line);
      TEST_ASSERT_EQUAL_STRING("ls -a", rval);
      free(line);
-     free(rval);
 }
 
 void test_trim_white_both_whitespace_double(void)
@@ -101,7 +96,6 @@ void test_trim_white_both_whitespace_double(void)
      char *rval = trim_white(line);
      TEST_ASSERT_EQUAL_STRING("ls -a", rval);
      free(line);
-     free(rval);
 }
 
 void test_trim_white_all_whitespace(void)
@@ -111,7 +105,6 @@ void test_trim_white_all_whitespace(void)
      char *rval = trim_white(line);
      TEST_ASSERT_EQUAL_STRING("", rval);
      free(line);
-     free(rval);
 }
 
 void test_trim_white_mostly_whitespace(void)
@@ -121,7 +114,6 @@ void test_trim_white_mostly_whitespace(void)
      char *rval = trim_white(line);
      TEST_ASSERT_EQUAL_STRING("a", rval);
      free(line);
-     free(rval);
 }
 
 void test_get_prompt_default(void)

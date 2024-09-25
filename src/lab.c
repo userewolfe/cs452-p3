@@ -10,6 +10,8 @@
 #include <bits/getopt_core.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <errno.h>
+
 
 
   /**
@@ -49,9 +51,7 @@
     }
     //if there were no spaces, just return line
     if (front_index == 0 && back_index == (int)strlen(line)-1){
-      char *new_line =(char *)malloc((strlen(line) + 1));
-      strcpy(new_line, line);
-      return new_line;
+      return line;
     }
 
     //if all spaces
@@ -62,7 +62,9 @@
       abort();
       }
       new_line[0] = '\0';
-      return new_line;
+      strcpy(line, new_line);
+      free(new_line);
+      return line;
     }
 
     //getting the new line's shortened length 
@@ -80,7 +82,10 @@
     }
     new_line[j] = '\0';
 
-    return new_line;
+    strcpy(line, new_line);
+    free(new_line);
+
+    return line;
   }
 
   void getInput(struct shell *sh) {
@@ -102,24 +107,19 @@
     //changing prompt to be prompt set in environment
     while ((line=readline(sh->prompt) )){
       char *new_line = trim_white(line);
-      while (strcmp(new_line, "") == 0){
+      free(line);
+      if (strcmp(new_line, "") == 0){
         printf("%s\n",new_line);
-        //strcpy(line, '\0');
-        line=readline(sh->prompt);
         free(new_line);
-        new_line = trim_white(line);
+        continue;
       }
-      printf("%s\n",new_line);
-
       add_history(new_line);
       char **strings = cmd_parse(new_line);
+      free(new_line);
       bool is_command = do_builtin(sh, strings);
-      fork();
+      // fork();
       //exit
       if (!is_command && strcmp(strings[0], "exit") == 0){
-        free(line);
-        //might be freeing already freed line
-        free(new_line);
         cmd_free(strings);
         sh_destroy(sh);
         exit(EXIT_SUCCESS);
@@ -130,25 +130,25 @@
         /*This is the child process*/
         pid_t child = getpid();
         setpgid(child, child);
-        tcsetpgrp(sh->shell_terminal,child);
+        tcsetpgrp(sh->shell_terminal,child); //child has control
         signal (SIGINT, SIG_DFL);
         signal (SIGQUIT, SIG_DFL);
         signal (SIGTSTP, SIG_DFL);
         signal (SIGTTIN, SIG_DFL);
         signal (SIGTTOU, SIG_DFL);
         execvp(strings[0], strings);
-        fprintf(stderr, "exec failed\n");
-        // fprintf(stderr, "not a command");
-        // free(line);
-        // free(new_line);
-        // cmd_free(strings);
+
+        fprintf(stderr, "exec failed\n%s\n", strerror(errno));
+
+        tcsetpgrp(sh->shell_terminal, sh->shell_pgid); //giving the parent control back
+
+
+        cmd_free(strings);
         // sh_destroy(sh);
         // exit(EXIT_FAILURE);
       }
-      cmd_free(strings);
-      free(new_line);
+      
     }
-    free(line);
     
   }
 
@@ -381,17 +381,15 @@ char *get_prompt(const char *env) {
   void sh_init(struct shell *sh){
 
     sh->shell_terminal = STDIN_FILENO;
+    sh->shell_is_interactive = isatty(sh->shell_terminal);
 
 
     sh->shell_pgid = getpgrp();//get process group function getpgrp()
 
-    sh->shell_terminal = STDIN_FILENO;
-    sh->shell_is_interactive = isatty(sh->shell_terminal);
-
     if(sh->shell_is_interactive == 1){
 
       /* Loop until we are in the foreground.  */
-      while (tcgetpgrp (sh->shell_is_interactive) != (sh->shell_pgid = getpgrp ()))
+      while (tcgetpgrp (sh->shell_terminal) != (sh->shell_pgid = getpgrp ()))
         kill (- sh->shell_pgid, SIGTTIN);
 
     }
