@@ -130,13 +130,13 @@
         /*This is the child process*/
         pid_t child = getpid();
         setpgid(child, child);
-        tcsetpgrp(sh.shell_terminal,child);
+        tcsetpgrp(sh->shell_terminal,child);
         signal (SIGINT, SIG_DFL);
         signal (SIGQUIT, SIG_DFL);
         signal (SIGTSTP, SIG_DFL);
         signal (SIGTTIN, SIG_DFL);
         signal (SIGTTOU, SIG_DFL);
-        execvp(strings[0], cmd);
+        execvp(strings[0], strings);
         fprintf(stderr, "exec failed\n");
         // fprintf(stderr, "not a command");
         // free(line);
