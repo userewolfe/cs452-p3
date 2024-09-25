@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <bits/getopt_core.h>
@@ -126,6 +127,17 @@
       //other complication
       //create a child process here
       if (!is_command){
+        /*This is the child process*/
+        pid_t child = getpid();
+        setpgid(child, child);
+        tcsetpgrp(sh.shell_terminal,child);
+        signal (SIGINT, SIG_DFL);
+        signal (SIGQUIT, SIG_DFL);
+        signal (SIGTSTP, SIG_DFL);
+        signal (SIGTTIN, SIG_DFL);
+        signal (SIGTTOU, SIG_DFL);
+        execvp(strings[0], cmd);
+        fprintf(stderr, "exec failed\n");
         // fprintf(stderr, "not a command");
         // free(line);
         // free(new_line);
@@ -367,16 +379,45 @@ char *get_prompt(const char *env) {
    * @param sh
    */
   void sh_init(struct shell *sh){
-    printf("in get sh_init\n");
 
-    //The BSD-specific getpgrp() call, which takes a single pid argument, is equivalent to getpgid(pid).
-    // sh->shell_pgid = 1;//get process group function getpgrp()
-    // sh->shell_is_interactive = 1;
+    sh->shell_terminal = STDIN_FILENO;
+
 
     sh->shell_pgid = getpgrp();//get process group function getpgrp()
-    sh->shell_terminal = 1;
+
     sh->shell_terminal = STDIN_FILENO;
     sh->shell_is_interactive = isatty(sh->shell_terminal);
+
+    if(sh->shell_is_interactive == 1){
+
+      /* Loop until we are in the foreground.  */
+      while (tcgetpgrp (sh->shell_is_interactive) != (sh->shell_pgid = getpgrp ()))
+        kill (- sh->shell_pgid, SIGTTIN);
+
+    }
+    //from task 8
+    signal(SIGINT, SIG_IGN);
+    signal(SIGQUIT, SIG_IGN);
+    signal(SIGTSTP, SIG_IGN);
+    signal(SIGTTIN, SIG_IGN);
+    signal(SIGTTOU, SIG_IGN);
+    //might need this one
+    // signal (SIGCHLD, SIG_IGN);
+
+    /* Put ourselves in our own process group.  */
+    sh->shell_pgid = getpid ();
+    if (setpgid (sh->shell_pgid, sh->shell_pgid) < 0)
+    {
+      perror ("Couldn't put the shell in its own process group");
+      exit (1);
+    }
+
+    /* Grab control of the terminal.  */
+    tcsetpgrp (sh->shell_terminal, sh->shell_pgid);
+
+    /* Save default terminal attributes for shell.  */
+    tcgetattr (sh->shell_terminal, &sh->shell_tmodes);
+
     //getting prompt from environment
     const char *name = "MY_PROMPT";
     char *env_prompt = get_prompt(name);
