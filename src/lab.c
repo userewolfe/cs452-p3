@@ -13,6 +13,23 @@
 #include <errno.h>
 
 
+  void launch_child(char **strings, struct shell *sh){
+    /*This is the child process*/
+    pid_t child = getpid();
+    setpgid(child, child);
+    tcsetpgrp(sh->shell_terminal,child); //child has control
+    signal (SIGINT, SIG_DFL);
+    signal (SIGQUIT, SIG_DFL);
+    signal (SIGTSTP, SIG_DFL);
+    signal (SIGTTIN, SIG_DFL);
+    signal (SIGTTOU, SIG_DFL);
+    execvp(strings[0], strings);
+
+    fprintf(stderr, "exec failed\n%s\n", strerror(errno));
+
+
+  }
+
 
   /**
    * @brief Trim the whitespace from the start and end of a string.
@@ -56,7 +73,7 @@
 
     //if all spaces
     if(front_index == ((int)strlen(line)-1)){
-      char *new_line =(char *)malloc(1*sizeof(char));
+      char *new_line =(char *)malloc(sizeof(char)*strlen(line));
       if(new_line == NULL){
       fprintf(stderr,"failed to allocate memory for new_line");
       abort();
@@ -67,10 +84,14 @@
       return line;
     }
 
-    //getting the new line's shortened length 
-    size_t new_line_length = back_index - front_index + 1;
-    //creating new line
-    char *new_line = (char *)malloc((new_line_length + 1));
+    // //getting the new line's shortened length 
+    // size_t new_line_length = back_index - front_index + 1;
+    // //creating new line
+    // char *new_line = (char *)malloc((new_line_length + 1));
+
+    //trying to use just line's length instead
+    char *new_line = (char *)malloc(strlen(line)*sizeof(char));
+
     if(new_line == NULL){
       fprintf(stderr,"failed to allocate memory for new_line");
       abort();
@@ -107,7 +128,6 @@
     //changing prompt to be prompt set in environment
     while ((line=readline(sh->prompt) )){
       char *new_line = trim_white(line);
-      free(line);
       if (strcmp(new_line, "") == 0){
         printf("%s\n",new_line);
         free(new_line);
@@ -124,28 +144,19 @@
         sh_destroy(sh);
         exit(EXIT_SUCCESS);
       }
+      
       //other complication
       //create a child process here
       if (!is_command){
-        /*This is the child process*/
-        pid_t child = getpid();
-        setpgid(child, child);
-        tcsetpgrp(sh->shell_terminal,child); //child has control
-        signal (SIGINT, SIG_DFL);
-        signal (SIGQUIT, SIG_DFL);
-        signal (SIGTSTP, SIG_DFL);
-        signal (SIGTTIN, SIG_DFL);
-        signal (SIGTTOU, SIG_DFL);
-        execvp(strings[0], strings);
 
-        fprintf(stderr, "exec failed\n%s\n", strerror(errno));
+        launch_child(strings, sh);
 
         tcsetpgrp(sh->shell_terminal, sh->shell_pgid); //giving the parent control back
 
-
         cmd_free(strings);
+        
         // sh_destroy(sh);
-        // exit(EXIT_FAILURE);
+
       }
       
     }
