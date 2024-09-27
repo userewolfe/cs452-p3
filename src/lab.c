@@ -15,7 +15,8 @@
 
   void launch_child(char **strings, struct shell *sh){
     /*This is the child process*/
-    pid_t child = getpid();
+    pid_t child = fork();
+    fprintf("\n%ld\n", (long)child);
     setpgid(child, child);
     tcsetpgrp(sh->shell_terminal,child); //child has control
     signal (SIGINT, SIG_DFL);
@@ -43,9 +44,26 @@
   char *trim_white(char *line){
     int front_index = 0;
     int back_index = 0;
+
+    // if(line[0] == ''){
+    //   printf("only enter");
+    //   char *new_line =(char *)malloc(sizeof(char)*strlen(line));
+    //   if(new_line == NULL){
+    //     fprintf(stderr,"failed to allocate memory for new_line");
+    //     abort();
+    //   }
+    //   new_line[0] = '\0';
+    //   strcpy(line, new_line);
+    //   free(new_line);
+    //   return line;
+    // }
+
+    // printf("\n%s\n", line);
     //finding leading whitespace
     for (int i = 0; i < (int)strlen(line); i++)
     {
+      printf("i=%d\t", i);
+      printf("\nfirst for loop: char=%c\n", line[i]);
       if (!isspace((unsigned char)line[i])){
         front_index = i;
         break;
@@ -56,9 +74,12 @@
       }
 
     }
+
     //finding trailing whitespace but ignoring null character
     for (int i = (int)strlen(line) - 1; i >= 0; i--)
     {
+      printf("i=%d\t", i);
+      printf("\nsecond for loop: char=%c\n", line[i]);
       //accounting for null terminator
       if (!isspace((unsigned char)line[i])){
         back_index = i;
@@ -68,15 +89,17 @@
     }
     //if there were no spaces, just return line
     if (front_index == 0 && back_index == (int)strlen(line)-1){
+      printf("there were no spaces");
       return line;
     }
 
     //if all spaces
     if(front_index == ((int)strlen(line)-1)){
+      printf("there were all spaces");
       char *new_line =(char *)malloc(sizeof(char)*strlen(line));
       if(new_line == NULL){
-      fprintf(stderr,"failed to allocate memory for new_line");
-      abort();
+        fprintf(stderr,"failed to allocate memory for new_line");
+        abort();
       }
       new_line[0] = '\0';
       strcpy(line, new_line);
@@ -90,7 +113,7 @@
     // char *new_line = (char *)malloc((new_line_length + 1));
 
     //trying to use just line's length instead
-    char *new_line = (char *)malloc(strlen(line)*sizeof(char));
+    char *new_line = (char *)malloc((strlen(line)+1));
 
     if(new_line == NULL){
       fprintf(stderr,"failed to allocate memory for new_line");
@@ -124,9 +147,29 @@
 
     //accessing user input
     using_history();
+    bool is_command;
+
 
     //changing prompt to be prompt set in environment
     while ((line=readline(sh->prompt) )){
+
+
+      //handle enter
+      if (strcmp(line, "") == 0){
+        printf("%s\n",line);
+        continue;
+      }
+
+
+      //EOF exit 
+      if(*line == NULL){
+        printf("EOF");
+        free(line);
+        clear_history();
+        sh_destroy(sh);
+        exit(EXIT_SUCCESS);
+      }
+
       char *new_line = trim_white(line);
       if (strcmp(new_line, "") == 0){
         printf("%s\n",new_line);
@@ -136,9 +179,9 @@
       add_history(new_line);
       char **strings = cmd_parse(new_line);
       free(new_line);
-      bool is_command = do_builtin(sh, strings);
-      // fork();
-      //exit
+      is_command = do_builtin(sh, strings);
+
+      //regular exit with exit command
       if (!is_command && strcmp(strings[0], "exit") == 0){
         cmd_free(strings);
         sh_destroy(sh);
@@ -160,6 +203,9 @@
       }
       
     }
+
+
+
     
   }
 
@@ -258,7 +304,7 @@ char *get_prompt(const char *env) {
     const long ARG_MAX = sysconf(_SC_ARG_MAX); 
 
     //creating array of strings that are arguments
-    char **strings = (char **)malloc(ARG_MAX * sizeof(char *));
+    char **strings = (char **)malloc(ARG_MAX*(sizeof(char)));
     if(strings == NULL){
       fprintf(stderr,"failed to allocate memory for parsed string array");
       abort();
@@ -316,6 +362,7 @@ char *get_prompt(const char *env) {
       
     }
     
+    // free(ARG_MAX);
     return strings;
   }
 
@@ -424,6 +471,9 @@ char *get_prompt(const char *env) {
     /* Grab control of the terminal.  */
     tcsetpgrp (sh->shell_terminal, sh->shell_pgid);
 
+    //potentially fixing ctl-d being handled by host
+    sh->shell_tmodes.c_cflag |= ICANON;
+
     /* Save default terminal attributes for shell.  */
     tcgetattr (sh->shell_terminal, &sh->shell_tmodes);
 
@@ -452,8 +502,10 @@ char *get_prompt(const char *env) {
    * @param sh
    */
   void sh_destroy(struct shell *sh){
+    printf("in sh destroy");
     free(sh->prompt);
-    //TODO I am sure there is more to free
+    free(sh);
+    
   }
 
   /**
