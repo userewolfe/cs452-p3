@@ -252,8 +252,10 @@
         // sh_destroy(sh);
 
       }
+
       
     } 
+    sh_destroy(sh);
   }
 
 // void tearDown(void) {
@@ -459,11 +461,11 @@ char *get_prompt(const char *env) {
 
     //history
     if (strcmp(argv[0], "history") == 0){
-      //not sure if we need this state history
-      HISTORY_STATE *history = history_get_history_state();
-      if(history == NULL){
-        return false;
-      }
+      // //not sure if we need this state history
+      // HISTORY_STATE *history = history_get_history_state();
+      // if(history == NULL){
+      //   return false;
+      // }
       //history entries
       HIST_ENTRY **list_commands = history_list();
       
