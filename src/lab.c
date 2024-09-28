@@ -1,3 +1,4 @@
+#define _POSIX_SOURCE
 #include <string.h>
 #include "../tests/harness/unity.h"
 #include "../src/lab.h"
@@ -11,22 +12,72 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+    struct background_process
+  {
+    pid_t process_pgid;
+    char **strings;
+    int job_num;
+  };
+
+  
+  pid_t launch_background(char **strings){
+    
+    /*This is the background child process*/
+    pid_t child = fork();
+    if(child < 0){
+      fprintf(stderr, "fork failed\n%s\n", strerror(errno));
+      return child;
+    } else if (child == 0){
+      setpgid(child, child);
+
+      if(strings == NULL || strings[0] == NULL){
+        printf("null strings");
+        return -1;
+      }
+      
+      execvp(strings[0], strings);
+      cmd_free(strings);
+    }
+    
+
+    //fprintf(stderr, "exec failed\n%s\n", strerror(errno));
+    return child;
 
 
-  void launch_child(char **strings, struct shell *sh){
+  }
+
+
+
+  pid_t launch_child(char **strings, struct shell *sh){
     /*This is the child process*/
     pid_t child = fork();
-    fprintf("\n%ld\n", (long)child);
-    setpgid(child, child);
-    tcsetpgrp(sh->shell_terminal,child); //child has control
-    signal (SIGINT, SIG_DFL);
-    signal (SIGQUIT, SIG_DFL);
-    signal (SIGTSTP, SIG_DFL);
-    signal (SIGTTIN, SIG_DFL);
-    signal (SIGTTOU, SIG_DFL);
-    execvp(strings[0], strings);
+    if(child < 0){
+      fprintf(stderr, "fork failed\n%s\n", strerror(errno));
+      return child;
+    } else if (child == 0){
+      // fprintf("\n%ld\n", child);
+      setpgid(child, child);
+      tcsetpgrp(sh->shell_terminal, getpid()); //child has control
+      signal (SIGINT, SIG_DFL);
+      signal (SIGQUIT, SIG_DFL);
+      signal (SIGTSTP, SIG_DFL);
+      signal (SIGTTIN, SIG_DFL);
+      signal (SIGTTOU, SIG_DFL);
+      if(strings == NULL || strings[0] == NULL){
+        printf("null strings");
+        return -1;
+      }
+      execvp(strings[0], strings);
 
-    fprintf(stderr, "exec failed\n%s\n", strerror(errno));
+
+    }
+    
+
+    //fprintf(stderr, "exec failed\n%s\n", strerror(errno));
+    return child;
 
 
   }
@@ -45,25 +96,11 @@
     int front_index = 0;
     int back_index = 0;
 
-    // if(line[0] == ''){
-    //   printf("only enter");
-    //   char *new_line =(char *)malloc(sizeof(char)*strlen(line));
-    //   if(new_line == NULL){
-    //     fprintf(stderr,"failed to allocate memory for new_line");
-    //     abort();
-    //   }
-    //   new_line[0] = '\0';
-    //   strcpy(line, new_line);
-    //   free(new_line);
-    //   return line;
-    // }
-
-    // printf("\n%s\n", line);
     //finding leading whitespace
     for (int i = 0; i < (int)strlen(line); i++)
     {
-      printf("i=%d\t", i);
-      printf("\nfirst for loop: char=%c\n", line[i]);
+      // printf("i=%d\t", i);
+      // printf("\nfirst for loop: char=%c\n", line[i]);
       if (!isspace((unsigned char)line[i])){
         front_index = i;
         break;
@@ -78,8 +115,8 @@
     //finding trailing whitespace but ignoring null character
     for (int i = (int)strlen(line) - 1; i >= 0; i--)
     {
-      printf("i=%d\t", i);
-      printf("\nsecond for loop: char=%c\n", line[i]);
+      // printf("i=%d\t", i);
+      // printf("\nsecond for loop: char=%c\n", line[i]);
       //accounting for null terminator
       if (!isspace((unsigned char)line[i])){
         back_index = i;
@@ -138,31 +175,25 @@
     printf("In set up\n");
     
     //STARTING PROGRAM
-    char *line; 
-    //(char *)malloc(sizeof(char) + 1); //allocating memory for a whole line of input
-    // if(line == NULL){
-    //     fprintf(stderr,"failed to allocate memory for line");
-    //     abort();
-    // }
+    char *line;
 
     //accessing user input
     using_history();
     bool is_command;
 
-
     //changing prompt to be prompt set in environment
     while ((line=readline(sh->prompt) )){
 
-
       //handle enter
       if (strcmp(line, "") == 0){
-        printf("%s\n",line);
+        // printf("%s\n", line);
         continue;
       }
 
 
+
       //EOF exit 
-      if(*line == NULL){
+      if(line == NULL){
         printf("EOF");
         free(line);
         clear_history();
@@ -172,12 +203,24 @@
 
       char *new_line = trim_white(line);
       if (strcmp(new_line, "") == 0){
-        printf("%s\n",new_line);
+        // printf("%s\n",new_line);
         free(new_line);
         continue;
       }
       add_history(new_line);
-      char **strings = cmd_parse(new_line);
+      char **strings;
+      
+      //check for background process with &
+      if(new_line[strlen(line)-1] == '&'){
+        strings = cmd_parse(new_line);
+        free(new_line);
+        pid_t child_pid = launch_background(strings);
+        //todo add a data structure to add jobs to
+        //once this is added to the bckground, skip rest of while and go back into the while
+        continue;
+      }
+
+      strings = cmd_parse(new_line);
       free(new_line);
       is_command = do_builtin(sh, strings);
 
@@ -188,25 +231,29 @@
         exit(EXIT_SUCCESS);
       }
       
+
       //other complication
       //create a child process here
       if (!is_command){
 
-        launch_child(strings, sh);
-
-        tcsetpgrp(sh->shell_terminal, sh->shell_pgid); //giving the parent control back
-
+        pid_t child_pid = launch_child(strings, sh);
+        int status;
+        pid_t parent_wait;
+        while (parent_wait == 0){
+          parent_wait = waitpid(child_pid, &status, 0);
+        }
+        if(WIFEXITED(status)){
+          // printf("\n%d\n", WEXITSTATUS(status));
+          tcsetpgrp(sh->shell_terminal, sh->shell_pgid); //giving the parent control back
+        }
+      
         cmd_free(strings);
         
         // sh_destroy(sh);
 
       }
       
-    }
-
-
-
-    
+    } 
   }
 
 // void tearDown(void) {
@@ -304,7 +351,7 @@ char *get_prompt(const char *env) {
     const long ARG_MAX = sysconf(_SC_ARG_MAX); 
 
     //creating array of strings that are arguments
-    char **strings = (char **)malloc(ARG_MAX*(sizeof(char)));
+    char **strings = (char **)malloc(ARG_MAX*(sizeof(char *)));
     if(strings == NULL){
       fprintf(stderr,"failed to allocate memory for parsed string array");
       abort();
@@ -334,8 +381,12 @@ char *get_prompt(const char *env) {
 
       //transfering strings
       for (int l = 0; l < k; l++){
-        strings[i][l] = line[j];
+        if(line[j] != '&'){
+          strings[i][l] = line[j];
+          
+        }
         j++;
+
       }
 
       //adding null character to end of new string
@@ -465,6 +516,7 @@ char *get_prompt(const char *env) {
     if (setpgid (sh->shell_pgid, sh->shell_pgid) < 0)
     {
       perror ("Couldn't put the shell in its own process group");
+      // tearDown();
       exit (1);
     }
 
@@ -485,6 +537,7 @@ char *get_prompt(const char *env) {
     // sh->prompt = get_prompt(name);
     if(sh->prompt == NULL){
       fprintf(stderr,"failed to allocate memory for shell struct's prompt");
+
       abort();
     }
     
