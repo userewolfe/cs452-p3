@@ -209,12 +209,14 @@
       //handle enter
       if (strcmp(line, "") == 0){
         // printf("%s\n", line);
+        free(line);
         continue;
       }
 
       //EOF exit 
       if(line == NULL){
         printf("EOF");
+        //might take this free out
         free(line);
         rl_clear_history();
         clear_history();
@@ -228,6 +230,7 @@
       char *new_line = trim_white(line);
       if (strcmp(new_line, "") == 0){
         // printf("%s\n",new_line);
+        free(line);
         free(new_line);
         continue;
       }
@@ -235,9 +238,9 @@
       char **strings;
       
       //check for background process with &
-      if(new_line[strlen(line)-1] == '&'){
+      if(new_line[strlen(new_line)-1] == '&'){
         //getting rid of &
-        new_line[strlen(line)-1] = '\0';
+        new_line[strlen(new_line)-1] = '\0';
         //trimming whitespace again
         new_line = trim_white(new_line);
         strings = cmd_parse(new_line);
@@ -261,14 +264,21 @@
             abort();
         }
         //storing command for child job
-        jobs[num_jobs]->strings = (char *)malloc((strlen(new_line)+1)*sizeof(char));
-        strcpy(jobs[num_jobs]->strings, new_line);
-        free(new_line);
+        jobs[num_jobs]->strings = (char *)malloc((strlen(line)+1)*sizeof(char));
+        strcpy(jobs[num_jobs]->strings, line);
 
         //launching child job in background
         pid_t child_pid = launch_background(strings, jobs, num_jobs);
+        //print process
+        fprintf(stdout, "\n[num_jobs] %d %s\n", jobs[num_jobs]->process_pid, &jobs[num_jobs]->strings);
         num_jobs++;
         cmd_free(strings);
+        if(line != NULL){
+          free(line);
+        }
+        // if(new_line != NULL){
+        //   free(new_line);
+        // }
 
         //once this is added to the bckground, skip rest of while and go back into the while
       
@@ -284,9 +294,10 @@
         if(jobs != NULL){
           destroy_jobs(jobs);
         }
-        free(line);
+        
         rl_clear_history();
         cmd_free(strings);
+        free(line);
         sh_destroy(sh);
         exit(EXIT_SUCCESS);
       }
@@ -307,19 +318,14 @@
           // printf("\n%d\n", WEXITSTATUS(status));
           tcsetpgrp(sh->shell_terminal, sh->shell_pgid); //giving the parent control back
         }
-        if (line != NULL){
-          free(line);
-        }
+        
 
         cmd_free(strings);
         
 
       }
-      if (line != NULL){
-        free(line);
-      }
-      
 
+      free(line);
       
     } 
     sh_destroy(sh);
