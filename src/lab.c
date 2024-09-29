@@ -35,6 +35,21 @@
     free(jobs);
   }
 
+   //checks to see if the process is running
+  //returns 1 if still running, 0 if not
+  int check_running(pid_t job_pid){
+    int status;
+    pid_t running = waitpid(job_pid, &status, WNOHANG);
+    if(running == job_pid){
+      return 0;
+    }else if (running == 0){
+      return 1;
+    }
+    //hopefully we don't get here :)
+    return (int)running;
+  }
+
+  //prints jobs for jobs builtin command
   void print_jobs(struct background_process **jobs){
     //if the first job has not been initialized return
     if(jobs != NULL && jobs[0] == NULL){
@@ -76,21 +91,6 @@
       }
     }
   }
-
-  //checks to see if the process is running
-  //returns 1 if still running, 0 if not
-  int check_running(pid_t job_pid){
-    int status;
-    pid_t running = waitpid(job_pid, &status, WNOHANG);
-    if(running == job_pid){
-      return 0;
-    }else if (running == 0){
-      return 1;
-    }
-    //hopefully we don't get here :)
-    return (int)running;
-  }
-
   
   pid_t launch_background(char **strings, struct background_process **jobs, int num_jobs){
     
@@ -404,11 +404,11 @@
         }
         
 
-        cmd_free(strings);
+        // cmd_free(strings);
         
 
       }
-
+      cmd_free(strings);
       free(line);
       
     } 
@@ -535,7 +535,8 @@ char *get_prompt(const char *env) {
 
 
       //set the size of that string plus null pointer
-      strings[i] = (char *)malloc((k + 1) * sizeof(char));
+      // strings[i] = (char *)malloc((k) * sizeof(char));
+      strings[i] = (char *)malloc((k+1) * sizeof(char));
 
       //going back in index to set string contents
       j -= k;
