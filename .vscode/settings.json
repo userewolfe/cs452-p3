@@ -2,6 +2,7 @@
     "files.associations": {
         "readline.h": "c",
         "unistd.h": "c",
-        "unity.h": "c"
+        "unity.h": "c",
+        "ctype.h": "c"
     }
 }

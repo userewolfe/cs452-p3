@@ -17,20 +17,32 @@
 
     struct background_process
   {
-    pid_t process_pgid;
-    char **strings;
+    pid_t process_pid;
+    char *strings;
     int job_num;
+    int running; // 0 for not running, 1 for running, -1 for never set correctly
   };
 
+
+
+
   
-  pid_t launch_background(char **strings){
+  pid_t launch_background(char **strings, struct background_process **jobs, int num_jobs){
     
     /*This is the background child process*/
     pid_t child = fork();
+    jobs[num_jobs]->process_pid = child;
+    jobs[num_jobs]->job_num = num_jobs;
+    jobs[num_jobs]->running = -1;
+  
+
     if(child < 0){
       fprintf(stderr, "fork failed\n%s\n", strerror(errno));
       return child;
+      jobs[num_jobs]->running = 0;
     } else if (child == 0){
+      jobs[num_jobs]->running = 1;
+      //putting child in own process group
       setpgid(child, child);
 
       if(strings == NULL || strings[0] == NULL){
@@ -48,7 +60,6 @@
 
 
   }
-
 
 
   pid_t launch_child(char **strings, struct shell *sh){
@@ -171,11 +182,16 @@
 
   void getInput(struct shell *sh) {
     
-    // set stuff up here
-    printf("In set up\n");
-    
     //STARTING PROGRAM
     char *line;
+    //settings up array of background jobs
+    int num_jobs = 0;
+    int max_jobs = 10;
+    struct background_process **jobs = (struct background_process **)malloc(sizeof(struct background_process)*max_jobs);
+    if(jobs == NULL){
+      fprintf(stderr,"failed to allocate memory for jobs array");
+      abort();
+    }
 
     //accessing user input
     using_history();
@@ -189,8 +205,6 @@
         // printf("%s\n", line);
         continue;
       }
-
-
 
       //EOF exit 
       if(line == NULL){
@@ -213,10 +227,31 @@
       //check for background process with &
       if(new_line[strlen(line)-1] == '&'){
         strings = cmd_parse(new_line);
+        //checking array size
+        if (max_jobs == num_jobs){
+          //if the array needs to be bigger, double it
+          max_jobs *= 2;
+          jobs = realloc(jobs, sizeof(struct background_process)*max_jobs);
+          if(jobs == NULL){
+            fprintf(stderr,"failed to allocate memory for jobs array double");
+            abort();
+          }
+        }
+        //allocating memory for child job
+        jobs[num_jobs] = (struct background_process *)malloc(sizeof(struct background_process));
+        if(jobs[num_jobs] == NULL){
+            fprintf(stderr,"failed to allocate memory for child job");
+            abort();
+        }
+        //storing command for child job
+        strcpy(jobs[num_jobs]->strings, new_line);
         free(new_line);
-        pid_t child_pid = launch_background(strings);
-        //todo add a data structure to add jobs to
+
+        //launching child job in background
+        pid_t child_pid = launch_background(strings, jobs, num_jobs);
+
         //once this is added to the bckground, skip rest of while and go back into the while
+      
         continue;
       }
 
@@ -233,13 +268,14 @@
       
 
       //other complication
-      //create a child process here
+      //create a foreground child process here
       if (!is_command){
 
         pid_t child_pid = launch_child(strings, sh);
         int status;
-        pid_t parent_wait;
-        while (parent_wait == 0){
+        pid_t parent_wait = 0;
+        //wait until child process is done
+        while (parent_wait != child_pid){
           parent_wait = waitpid(child_pid, &status, 0);
         }
         if(WIFEXITED(status)){
