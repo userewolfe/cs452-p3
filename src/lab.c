@@ -23,8 +23,14 @@
     int running; // 0 for not running, 1 for running, -1 for never set correctly
   };
 
-
-
+  void destroy_jobs(struct background_process **jobs){
+    for(int i = 0; jobs[i] != NULL; i++){
+      //TODO might need to check if these are null first
+        free(jobs[i]->strings);
+        free(jobs[i]);
+    }
+    free(jobs);
+  }
 
   
   pid_t launch_background(char **strings, struct background_process **jobs, int num_jobs){
@@ -187,7 +193,7 @@
     //settings up array of background jobs
     int num_jobs = 0;
     int max_jobs = 10;
-    struct background_process **jobs = (struct background_process **)malloc(sizeof(struct background_process)*max_jobs);
+    struct background_process **jobs = malloc(sizeof(struct background_process)*max_jobs);
     if(jobs == NULL){
       fprintf(stderr,"failed to allocate memory for jobs array");
       abort();
@@ -210,7 +216,11 @@
       if(line == NULL){
         printf("EOF");
         free(line);
+        rl_clear_history();
         clear_history();
+        if(jobs != NULL){
+          destroy_jobs(jobs);
+        }
         sh_destroy(sh);
         exit(EXIT_SUCCESS);
       }
@@ -226,12 +236,17 @@
       
       //check for background process with &
       if(new_line[strlen(line)-1] == '&'){
+        //getting rid of &
+        new_line[strlen(line)-1] = '\0';
+        //trimming whitespace again
+        new_line = trim_white(new_line);
         strings = cmd_parse(new_line);
         //checking array size
-        if (max_jobs == num_jobs){
+        //plus one because array must end with a NULL
+        if (max_jobs == num_jobs + 1){
           //if the array needs to be bigger, double it
           max_jobs *= 2;
-          jobs = realloc(jobs, sizeof(struct background_process)*max_jobs);
+          jobs = realloc(jobs, sizeof(struct background_process *)*max_jobs);
           if(jobs == NULL){
             fprintf(stderr,"failed to allocate memory for jobs array double");
             abort();
@@ -239,16 +254,21 @@
         }
         //allocating memory for child job
         jobs[num_jobs] = (struct background_process *)malloc(sizeof(struct background_process));
+        //indicating end of array of jobs
+        jobs[num_jobs + 1] = NULL;
         if(jobs[num_jobs] == NULL){
             fprintf(stderr,"failed to allocate memory for child job");
             abort();
         }
         //storing command for child job
+        jobs[num_jobs]->strings = (char *)malloc((strlen(new_line)+1)*sizeof(char));
         strcpy(jobs[num_jobs]->strings, new_line);
         free(new_line);
 
         //launching child job in background
         pid_t child_pid = launch_background(strings, jobs, num_jobs);
+        num_jobs++;
+        cmd_free(strings);
 
         //once this is added to the bckground, skip rest of while and go back into the while
       
@@ -261,6 +281,11 @@
 
       //regular exit with exit command
       if (!is_command && strcmp(strings[0], "exit") == 0){
+        if(jobs != NULL){
+          destroy_jobs(jobs);
+        }
+        free(line);
+        rl_clear_history();
         cmd_free(strings);
         sh_destroy(sh);
         exit(EXIT_SUCCESS);
@@ -282,16 +307,24 @@
           // printf("\n%d\n", WEXITSTATUS(status));
           tcsetpgrp(sh->shell_terminal, sh->shell_pgid); //giving the parent control back
         }
-      
+        if (line != NULL){
+          free(line);
+        }
+
         cmd_free(strings);
         
-        // sh_destroy(sh);
 
       }
+      if (line != NULL){
+        free(line);
+      }
+      
 
       
     } 
     sh_destroy(sh);
+    rl_clear_history();
+    destroy_jobs(jobs);
   }
 
 // void tearDown(void) {
