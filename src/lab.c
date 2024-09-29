@@ -21,8 +21,11 @@
     char *strings;
     int job_num;
     int running; // 0 for not running, 1 for running, -1 for never set correctly
+    bool printed;
+  
   };
 
+  //free jobs array
   void destroy_jobs(struct background_process **jobs){
     for(int i = 0; jobs[i] != NULL; i++){
       //TODO might need to check if these are null first
@@ -32,22 +35,78 @@
     free(jobs);
   }
 
+  void print_jobs(struct background_process **jobs){
+    //if the first job has not been initialized return
+    if(jobs != NULL && jobs[0] == NULL){
+      return;
+    }
+    for(int i = 0; jobs[i]!= NULL; i++){
+      //if its already been printed continue
+      if(jobs[i]->printed){
+        continue;
+      }
+      if(jobs[i]->running == 1){
+         fprintf(stdout, "\n[%d] %d Running %s\n", jobs[i]->job_num, jobs[i]->process_pid, jobs[i]->strings);
+      } else if (jobs[i]->running == 1){
+         fprintf(stdout, "\n[%d] Done %s\n", jobs[i]->process_pid, jobs[i]->strings);
+      }
+    }
+  }
+
+  //print jobs that are done in between enters
+  void print_finished_jobs(struct background_process **jobs){
+    //if the first job has not been initialized return
+    if(jobs != NULL && jobs[0] == NULL){
+      return;
+    }
+    for(int i = 0; jobs[i]!= NULL; i++){
+      //if its already been printed continue
+      if(jobs[i]->printed){
+        continue;
+      }
+      int status = check_running(jobs[i]);
+      //if the status has changed
+      if (status != jobs[i]->process_pid){
+        //update status
+        jobs[i]->process_pid = status;
+        //set to printed
+        jobs[i]->printed = true;
+        //print to stdout
+        fprintf(stdout, "\n[%d] Done %s\n", jobs[i]->job_num, jobs[i]->strings);
+      }
+    }
+  }
+
+  //checks to see if the process is running
+  //returns 1 if still running, 0 if not
+  int check_running(pid_t job_pid){
+    int status;
+    pid_t running = waitpid(job_pid, &status, WNOHANG);
+    if(running == job_pid){
+      return 0;
+    }else if (running == 0){
+      return 1;
+    }
+    //hopefully we don't get here :)
+    return (int)running;
+  }
+
   
   pid_t launch_background(char **strings, struct background_process **jobs, int num_jobs){
     
     /*This is the background child process*/
     pid_t child = fork();
-    jobs[num_jobs]->process_pid = child;
-    jobs[num_jobs]->job_num = num_jobs;
-    jobs[num_jobs]->running = -1;
+    // jobs[num_jobs]->process_pid = child;
+    // jobs[num_jobs]->job_num = num_jobs;
+    // jobs[num_jobs]->running = -1;
   
 
     if(child < 0){
       fprintf(stderr, "fork failed\n%s\n", strerror(errno));
       return child;
-      jobs[num_jobs]->running = 0;
+      // jobs[num_jobs]->running = 0;
     } else if (child == 0){
-      jobs[num_jobs]->running = 1;
+      // jobs[num_jobs]->running = 1;
       //putting child in own process group
       setpgid(child, child);
 
@@ -55,8 +114,10 @@
         printf("null strings");
         return -1;
       }
-      
+      //fprintf(stdout, "\n[%d] %d %s\n", num_jobs, (int)jobs[num_jobs]->process_pid, jobs[num_jobs]->strings);
       execvp(strings[0], strings);
+      //print process
+      
       cmd_free(strings);
     }
     
@@ -143,13 +204,13 @@
     }
     //if there were no spaces, just return line
     if (front_index == 0 && back_index == (int)strlen(line)-1){
-      printf("there were no spaces");
+      // printf("there were no spaces");
       return line;
     }
 
     //if all spaces
     if(front_index == ((int)strlen(line)-1)){
-      printf("there were all spaces");
+      // printf("there were all spaces");
       char *new_line =(char *)malloc(sizeof(char)*strlen(line));
       if(new_line == NULL){
         fprintf(stderr,"failed to allocate memory for new_line");
@@ -198,6 +259,9 @@
       fprintf(stderr,"failed to allocate memory for jobs array");
       abort();
     }
+    for(int i = 0; i <= max_jobs; i++){
+      jobs[i] = NULL;
+    }
 
     //accessing user input
     using_history();
@@ -210,6 +274,9 @@
       if (strcmp(line, "") == 0){
         // printf("%s\n", line);
         free(line);
+        if(jobs != NULL){
+          print_finished_jobs(jobs);
+        }
         continue;
       }
 
@@ -232,12 +299,15 @@
         // printf("%s\n",new_line);
         free(line);
         free(new_line);
+        if (jobs != NULL){
+          print_finished_jobs(jobs);
+        }
         continue;
       }
       add_history(new_line);
       char **strings;
       
-      //check for background process with &
+      //check for BACKGROUND PROCCESS with &
       if(new_line[strlen(new_line)-1] == '&'){
         //getting rid of &
         new_line[strlen(new_line)-1] = '\0';
@@ -254,8 +324,11 @@
             fprintf(stderr,"failed to allocate memory for jobs array double");
             abort();
           }
+          for(int i = (max_jobs/2); i <= max_jobs; i++){
+            jobs[i] = NULL;
+          }
         }
-        //allocating memory for child job
+        //allocating memory for child job beckground
         jobs[num_jobs] = (struct background_process *)malloc(sizeof(struct background_process));
         //indicating end of array of jobs
         jobs[num_jobs + 1] = NULL;
@@ -267,10 +340,15 @@
         jobs[num_jobs]->strings = (char *)malloc((strlen(line)+1)*sizeof(char));
         strcpy(jobs[num_jobs]->strings, line);
 
+
         //launching child job in background
         pid_t child_pid = launch_background(strings, jobs, num_jobs);
+        jobs[num_jobs]->process_pid = child_pid;
+        jobs[num_jobs]->job_num = num_jobs;
+        jobs[num_jobs]->running = check_running(jobs[num_jobs]->process_pid);
+        jobs[num_jobs]->printed = false;
         //print process
-        fprintf(stdout, "\n[num_jobs] %d %s\n", jobs[num_jobs]->process_pid, &jobs[num_jobs]->strings);
+        fprintf(stdout, "\n[%d] %d %s\n", num_jobs, (int)jobs[num_jobs]->process_pid, jobs[num_jobs]->strings);
         num_jobs++;
         cmd_free(strings);
         if(line != NULL){
@@ -286,8 +364,14 @@
       }
 
       strings = cmd_parse(new_line);
-      free(new_line);
+      // free(new_line);
       is_command = do_builtin(sh, strings);
+
+      if(is_command && strcmp(strings[0], "jobs") == 0){
+        if(jobs != NULL){
+          print_jobs(jobs);
+        }
+      }
 
       //regular exit with exit command
       if (!is_command && strcmp(strings[0], "exit") == 0){
@@ -519,6 +603,11 @@ char *get_prompt(const char *env) {
    * @return True if the command was a built in command
    */
   bool do_builtin(struct shell *sh, char **argv){
+
+    //jobs command
+    if (strcmp(argv[0], "jobs") == 0){
+      return true;
+    }
 
     //changing directory
     if (strcmp(argv[0], "cd") == 0){
