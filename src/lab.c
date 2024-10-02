@@ -79,7 +79,7 @@
       if(jobs[i]->printed){
         continue;
       }
-      int status = check_running(jobs[i]);
+      int status = check_running(jobs[i]->process_pid);
       //if the status has changed
       if (status != jobs[i]->process_pid){
         //update status
@@ -92,7 +92,7 @@
     }
   }
   
-  pid_t launch_background(char **strings, struct background_process **jobs, int num_jobs){
+  pid_t launch_background(char **strings){
     
     /*This is the background child process*/
     pid_t child = fork();
@@ -342,7 +342,7 @@
 
 
         //launching child job in background
-        pid_t child_pid = launch_background(strings, jobs, num_jobs);
+        pid_t child_pid = launch_background(strings);
         jobs[num_jobs]->process_pid = child_pid;
         jobs[num_jobs]->job_num = num_jobs;
         jobs[num_jobs]->running = check_running(jobs[num_jobs]->process_pid);
@@ -432,12 +432,14 @@
 */
 char *get_prompt(const char *env) {
   printf("in get prompt\n");
-    //TODO add error handling, look at old labs
+    //TODO add error handling, look at old c labs
     const char *prompt = getenv(env);
 
+    //if prompt is not null
     if(prompt != NULL){
-      printf("in get prompt !=null\n");
-      char *actual_prompt = (char *)malloc((strlen(prompt) + 1) * sizeof(char));
+      // printf("in get prompt !=null\n");
+      //set up the actual prompt with malloc and use the size of prompt to size it correctly
+      char *actual_prompt = (char *)malloc((strlen(prompt) + 1) );
       if(actual_prompt == NULL){
         fprintf(stderr,"failed to allocate memory for actual_prompt");
         abort();
@@ -693,7 +695,7 @@ char *get_prompt(const char *env) {
     //potentially fixing ctl-d being handled by host
     sh->shell_tmodes.c_cflag |= ICANON;
 
-    /* Save default terminal attributes for shell.  */
+    //save default terminal flags
     tcgetattr (sh->shell_terminal, &sh->shell_tmodes);
 
     //getting prompt from environment
@@ -743,9 +745,6 @@ char *get_prompt(const char *env) {
     //flags
     int vflag = 0;
     int c;
-    //might need to add this back in, turns off error messages
-    opterr = 0;
-    char *cvalue = NULL;
 
     while ((c = getopt (argc, argv, "v")) != -1)
       switch (c)
@@ -761,7 +760,7 @@ char *get_prompt(const char *env) {
           return;
         }
     if (vflag > 0){
-      printf ("horray you picked v\n");
+      // printf ("horray you picked v\n");
       fprintf(stdout, "version %d.%d\n", lab_VERSION_MAJOR, lab_VERSION_MINOR);
       exit(EXIT_SUCCESS);
     }

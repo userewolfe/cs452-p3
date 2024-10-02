@@ -3,9 +3,6 @@
 #include "../src/lab.h"
 
 
-
-
-
 void setUp(void) {
   // set stuff up here
 }
@@ -13,6 +10,7 @@ void setUp(void) {
 void tearDown(void) {
   // clean stuff up here
 }
+
 
 void test_cmd_parse2(void)
 {
@@ -37,8 +35,8 @@ void test_cmd_parse2(void)
      free(expected[0]);
      free(expected[1]);
      free(expected);
-     cmd_free(actual);
      free(stng);
+     cmd_free(actual);
 }
 
 void test_cmd_parse(void)
